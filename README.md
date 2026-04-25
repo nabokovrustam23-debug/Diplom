@@ -15,4 +15,4 @@
 
 ## Статус
 
-Проектирование. Стек разработки утверждается.
+Проектирование. Стек разработки утверждён: ASP.NET Core 8 (C#) + Entity Framework Core + MS SQL Server + Razor Pages + Bootstrap.
