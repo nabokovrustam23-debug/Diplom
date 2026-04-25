@@ -1,0 +1,44 @@
+# IDE & editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output (.NET)
+bin/
+obj/
+out/
+publish/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Rider
+**/.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
+
+# Local config / secrets
+appsettings.Local.json
+appsettings.*.Local.json
+*.pfx
+.env
+.env.*
+
+# MSSQL local DBs (LocalDB)
+*.mdf
+*.ldf
+
+# User-specific Office temps
+~$*
