@@ -1,0 +1,40 @@
+@page "{id:int}"
+@model BarbershopCrm.Web.Pages.Admin.Branches.DeleteModel
+@{
+    ViewData["Title"] = "Удаление филиала";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Справочник / Филиалы</div>
+    <h2 class="mt-2 mb-3">Удалить филиал?</h2>
+
+    @if (Model.Branch is not null)
+    {
+        <div class="card mb-4" style="max-width: 480px;">
+            <h4 class="mb-1">@Model.Branch.Name</h4>
+            <p class="text-muted mb-1">@Model.Branch.Address</p>
+            <p class="text-muted mono mb-0">@Model.Branch.OpeningTime.ToString("HH:mm") – @Model.Branch.ClosingTime.ToString("HH:mm")</p>
+        </div>
+
+        @if (Model.BookingsCount > 0 || Model.MastersCount > 0)
+        {
+            <div class="notice notice-danger" style="max-width:480px;">
+                <h4>Удаление невозможно.</h4>
+                <p class="mb-0 text-muted">
+                    К филиалу привязано записей: @Model.BookingsCount, мастеров: @Model.MastersCount.
+                    Сначала отвяжите связанные данные.
+                </p>
+            </div>
+            <a class="btn btn-outline mt-3" asp-page="Index">← Назад</a>
+        }
+        else
+        {
+            <form method="post">
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-danger">Удалить безвозвратно</button>
+                    <a asp-page="Index" class="btn btn-outline">Отмена</a>
+                </div>
+            </form>
+        }
+    }
+</div>

@@ -10,13 +10,11 @@
     };
 }
 
-<nav aria-label="Шаги записи">
-    <ol class="breadcrumb mt-3">
-        @for (var i = 0; i < steps.Length; i++)
-        {
-            var num = i + 1;
-            var cls = num == Model ? "fw-semibold" : "text-muted";
-            <li class="breadcrumb-item @cls">@num. @steps[i]</li>
-        }
-    </ol>
-</nav>
+<ol class="booking-steps">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var num = i + 1;
+        string cls = num == Model ? "is-active" : (num < Model ? "is-done" : "");
+        <li class="@cls"><span class="num">@($"0{num}")</span>@steps[i]</li>
+    }
+</ol>

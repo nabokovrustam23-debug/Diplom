@@ -1,0 +1,44 @@
+@page "{id:int}"
+@model BarbershopCrm.Web.Pages.Admin.Services.EditModel
+@{
+    ViewData["Title"] = "Редактирование услуги";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Прайс-лист / Услуги</div>
+    <h2 class="mt-2 mb-5">Изменение услуги</h2>
+
+    <form method="post" class="col-form">
+        <div asp-validation-summary="ModelOnly" class="notice notice-danger"
+             style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+        <div class="field">
+            <label asp-for="Input.Name">Название</label>
+            <input asp-for="Input.Name" />
+            <span asp-validation-for="Input.Name" class="text-danger"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Description">Описание</label>
+            <textarea asp-for="Input.Description" rows="3"></textarea>
+        </div>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.DurationMinutes">Длительность, мин</label>
+                <input asp-for="Input.DurationMinutes" type="number" min="15" step="15" />
+                <span asp-validation-for="Input.DurationMinutes" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Price">Цена, ₽</label>
+                <input asp-for="Input.Price" type="number" min="0" step="50" />
+                <span asp-validation-for="Input.Price" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a asp-page="Index" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

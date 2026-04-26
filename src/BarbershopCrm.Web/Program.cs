@@ -19,7 +19,14 @@ builder.Services
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin", "OwnerOnly");
+});
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OwnerOnly", policy => policy.RequireRole("Owner"));
+});
 builder.Services.AddScoped<ISlotService, SlotService>();
 
 var app = builder.Build();
@@ -32,6 +39,9 @@ if (app.Environment.IsDevelopment())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
     await DatabaseSeeder.SeedAsync(db);
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await IdentitySeeder.SeedAsync(db, roleManager, userManager);
 }
 else
 {
