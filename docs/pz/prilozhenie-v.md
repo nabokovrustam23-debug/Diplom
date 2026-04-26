@@ -1,148 +1,238 @@
 # Приложение В
 ## (обязательное)
-### Тест-кейсы
+### Структура базы данных
 
-В настоящем приложении приведены тест-кейсы тринадцати модульных тестов, разработанных в рамках выпускной квалификационной работы. Тесты выполняются в проекте `BarbershopCrm.Tests` посредством библиотеки xUnit.net 2.6 с использованием провайдера `Microsoft.EntityFrameworkCore.InMemory` 8.
+В настоящем приложении приведена структура базы данных CRM-системы сети барбершопов «Тихий час»: ER-диаграмма физической модели и DDL-скрипт создания таблиц, ограничений и индексов на языке Transact-SQL.
 
-## В.1 Тест-кейс 1 — `PersonaTests.Persona_DefaultsAreSane`
+База данных содержит 11 таблиц предметной области и 7 системных таблиц ASP.NET Core Identity. Системные таблицы создаются автоматически миграциями EF Core и в DDL ниже не приводятся; в таблицу `AspNetUsers` при этом добавляется столбец `PersonaId` с уникальным индексом и внешним ключом на `Persona`.
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что создание объекта `Persona` без явных значений даёт корректные значения по умолчанию |
-| Предусловие           | Доступен класс `Persona` из проекта `BarbershopCrm.Domain`                              |
-| Шаги                  | 1. Создать объект `var p = new Persona { LastName = "Иванов", FirstName = "Иван", Phone = "+79000000000" };` |
-| Ожидаемый результат   | `p.PersonaId == 0`, `p.MiddleName == null`, `p.Email == null`, `p.BirthDate == null`     |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+## В.1 Перечень таблиц предметной области
 
-## В.2 Тест-кейс 2 — `PersonaTests.Booking_DefaultStatusIsCreated`
+Перечень таблиц с краткой характеристикой назначения приведён в таблице В.1.
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что новый объект `Booking` имеет статус `Created` по умолчанию                |
-| Предусловие           | Доступен класс `Booking` и перечисление `BookingStatus`                                  |
-| Шаги                  | 1. Создать объект `var b = new Booking();`                                              |
-| Ожидаемый результат   | `b.Status == BookingStatus.Created`                                                     |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+Таблица В.1 — Перечень таблиц базы данных
 
-## В.3 Тест-кейс 3 — `DatabaseSeederTests.SeedAsync_FillsAllReferenceTables`
+| Таблица            | Назначение                                                              |
+|--------------------|-------------------------------------------------------------------------|
+| `Persona`          | Физическое лицо: общие персональные данные (ФИО, телефон, e-mail, пол)  |
+| `Branches`         | Филиалы сети с адресом, графиком работы и контактами                    |
+| `Services`         | Прайс-лист услуг сети: наименование, длительность, цена, описание       |
+| `Masters`          | Мастера-барберы: ссылка на `Persona` + специфичные атрибуты             |
+| `MasterBranch`     | Связка «мастер–филиал» (M:N)                                            |
+| `MasterService`    | Связка «мастер–услуга» с возможным переопределением длительности        |
+| `WorkSchedule`     | Расписание работы мастера в филиале на день/неделю                      |
+| `Bookings`         | Записи (онлайн и офлайн) на услуги в выбранный филиал к мастеру         |
+| `Visits`           | История фактических визитов клиента (отдельно от записи)                |
+| `Clients`          | Клиенты: ссылка на `Persona` + атрибуты CRM (последний визит, чек)      |
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что после однократного запуска сидера в БД присутствует ожидаемое количество филиалов, услуг и мастеров |
-| Предусловие           | Создан пустой `ApplicationDbContext` с InMemory-провайдером                             |
-| Шаги                  | 1. Вызвать `await DatabaseSeeder.SeedAsync(db);`                                        |
-| Ожидаемый результат   | `db.Branches.Count() == 3`, `db.Services.Count() == 6`, `db.Masters.Count() == 5`        |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+## В.2 ER-диаграмма
 
-## В.4 Тест-кейс 4 — `DatabaseSeederTests.SeedAsync_AllMastersHavePersona`
+ER-диаграмма физической модели данных представлена на рисунке 2.1 в подразделе 2.4 пояснительной записки.
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что у каждого созданного мастера есть связанная сущность `Persona`            |
-| Предусловие           | Создан пустой `ApplicationDbContext`, выполнен `DatabaseSeeder.SeedAsync(db)`            |
-| Шаги                  | 1. Получить всех мастеров с подгрузкой связи `.Include(m => m.Persona)`                  |
-| Ожидаемый результат   | Для каждого мастера `m.Persona != null` и `string.IsNullOrEmpty(m.Persona.Phone) == false` |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+## В.3 DDL-скрипт создания базы данных
 
-## В.5 Тест-кейс 5 — `DatabaseSeederTests.SeedAsync_LunchSchedulesAreOneHour`
+Скрипт ниже соответствует полной схеме БД и может быть выполнен на чистом экземпляре MSSQL 2019+ для развёртывания структуры.
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что все интервалы расписания типа `Lunch` имеют длительность ровно 60 минут   |
-| Предусловие           | Создан пустой `ApplicationDbContext`, выполнен `DatabaseSeeder.SeedAsync(db)`            |
-| Шаги                  | 1. Выбрать все `WorkSchedules` со `Type == ScheduleType.Lunch`                          |
-| Ожидаемый результат   | Длительность каждого интервала равна 60 минут                                            |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+```sql
+-- =============================================================================
+-- Persona — Физическое лицо
+-- =============================================================================
+CREATE TABLE dbo.Persona (
+    PersonaId    INT           IDENTITY(1, 1) NOT NULL,
+    LastName     NVARCHAR(100) NOT NULL,
+    FirstName    NVARCHAR(100) NOT NULL,
+    MiddleName   NVARCHAR(100) NULL,
+    Phone        NVARCHAR(20)  NOT NULL,
+    Email        NVARCHAR(256) NULL,
+    BirthDate    DATE          NULL,
+    Gender       NCHAR(1)      NULL,
+    CONSTRAINT PK_Persona        PRIMARY KEY (PersonaId),
+    CONSTRAINT UQ_Persona_Phone  UNIQUE (Phone),
+    CONSTRAINT CK_Persona_Gender CHECK (Gender IS NULL OR Gender IN (N'М', N'Ж'))
+);
+GO
 
-## В.6 Тест-кейс 6 — `DatabaseSeederTests.SeedAsync_IsIdempotent`
+-- =============================================================================
+-- Branches — Филиалы
+-- =============================================================================
+CREATE TABLE dbo.Branches (
+    BranchId     INT            IDENTITY(1, 1) NOT NULL,
+    Name         NVARCHAR(200)  NOT NULL,
+    Address      NVARCHAR(500)  NOT NULL,
+    Phone        NVARCHAR(20)   NULL,
+    OpenTime     TIME(0)        NOT NULL,
+    CloseTime    TIME(0)        NOT NULL,
+    IsActive     BIT            NOT NULL CONSTRAINT DF_Branches_IsActive DEFAULT (1),
+    CONSTRAINT PK_Branches PRIMARY KEY (BranchId),
+    CONSTRAINT CK_Branches_Time CHECK (OpenTime < CloseTime)
+);
+GO
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что повторный запуск сидера не создаёт дубликатов                             |
-| Предусловие           | Создан пустой `ApplicationDbContext`                                                    |
-| Шаги                  | 1. Вызвать `DatabaseSeeder.SeedAsync(db)`. 2. Сохранить количества записей. 3. Вызвать `DatabaseSeeder.SeedAsync(db)` повторно. |
-| Ожидаемый результат   | Количества `Branches`, `Services`, `Masters`, `Personas` совпадают до и после второго запуска |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+-- =============================================================================
+-- Services — Услуги
+-- =============================================================================
+CREATE TABLE dbo.Services (
+    ServiceId        INT           IDENTITY(1, 1) NOT NULL,
+    Name             NVARCHAR(200) NOT NULL,
+    Description      NVARCHAR(MAX) NULL,
+    DurationMinutes  INT           NOT NULL,
+    Price            DECIMAL(10,2) NOT NULL,
+    IsActive         BIT           NOT NULL CONSTRAINT DF_Services_IsActive DEFAULT (1),
+    CONSTRAINT PK_Services PRIMARY KEY (ServiceId),
+    CONSTRAINT CK_Services_Duration CHECK (DurationMinutes BETWEEN 5 AND 480),
+    CONSTRAINT CK_Services_Price CHECK (Price >= 0)
+);
+GO
 
-## В.7 Тест-кейс 7 — `SlotServiceTests.NoBookings_ReturnsAllSlotsThatFitInWorkInterval`
+-- =============================================================================
+-- Masters — Мастера-барберы
+-- =============================================================================
+CREATE TABLE dbo.Masters (
+    MasterId    INT           IDENTITY(1, 1) NOT NULL,
+    PersonaId   INT           NOT NULL,
+    Position    NVARCHAR(100) NULL,
+    HireDate    DATE          NULL,
+    AvatarPath  NVARCHAR(500) NULL,
+    Bio         NVARCHAR(MAX) NULL,
+    IsActive    BIT           NOT NULL CONSTRAINT DF_Masters_IsActive DEFAULT (1),
+    CONSTRAINT PK_Masters             PRIMARY KEY (MasterId),
+    CONSTRAINT UQ_Masters_PersonaId   UNIQUE (PersonaId),
+    CONSTRAINT FK_Masters_Persona     FOREIGN KEY (PersonaId)
+        REFERENCES dbo.Persona (PersonaId) ON DELETE NO ACTION
+);
+GO
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что при отсутствии записей возвращаются все стартовые слоты, помещающиеся в свободное рабочее окно |
-| Предусловие           | В БД заведён мастер с одним рабочим интервалом 10:00–14:00, услуга длительностью 60 минут, дата без бронирований |
-| Шаги                  | 1. Вызвать `slotService.GetAvailableSlotsAsync(masterId, serviceId, branchId, date)`     |
-| Ожидаемый результат   | Возвращены слоты `10:00, 10:15, 10:30, …, 13:00` (последний слот, который ещё помещается в окно) |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+-- =============================================================================
+-- MasterBranch — Связка мастер–филиал
+-- =============================================================================
+CREATE TABLE dbo.MasterBranch (
+    MasterId  INT NOT NULL,
+    BranchId  INT NOT NULL,
+    CONSTRAINT PK_MasterBranch        PRIMARY KEY (MasterId, BranchId),
+    CONSTRAINT FK_MasterBranch_Master FOREIGN KEY (MasterId)
+        REFERENCES dbo.Masters (MasterId) ON DELETE CASCADE,
+    CONSTRAINT FK_MasterBranch_Branch FOREIGN KEY (BranchId)
+        REFERENCES dbo.Branches (BranchId) ON DELETE CASCADE
+);
+GO
 
-## В.8 Тест-кейс 8 — `SlotServiceTests.ExistingBooking_BlocksOverlappingSlots`
+-- =============================================================================
+-- MasterService — Связка мастер–услуга
+-- =============================================================================
+CREATE TABLE dbo.MasterService (
+    MasterId         INT NOT NULL,
+    ServiceId        INT NOT NULL,
+    DurationOverride INT NULL,
+    CONSTRAINT PK_MasterService          PRIMARY KEY (MasterId, ServiceId),
+    CONSTRAINT FK_MasterService_Master   FOREIGN KEY (MasterId)
+        REFERENCES dbo.Masters (MasterId) ON DELETE CASCADE,
+    CONSTRAINT FK_MasterService_Service  FOREIGN KEY (ServiceId)
+        REFERENCES dbo.Services (ServiceId) ON DELETE CASCADE,
+    CONSTRAINT CK_MasterService_Duration CHECK (DurationOverride IS NULL OR DurationOverride BETWEEN 5 AND 480)
+);
+GO
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что существующая запись блокирует все стартовые слоты, перекрывающие её      |
-| Предусловие           | Существует запись с 11:00 до 12:00 у того же мастера на ту же дату                       |
-| Шаги                  | 1. Вызвать `GetAvailableSlotsAsync` для услуги длительностью 60 минут                    |
-| Ожидаемый результат   | В возврате отсутствуют слоты `10:15, 10:30, 10:45, 11:00, 11:15, 11:30, 11:45` (любой из них пересекает занятый интервал) |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+-- =============================================================================
+-- WorkSchedule — Расписание мастера в филиале
+-- =============================================================================
+CREATE TABLE dbo.WorkSchedule (
+    ScheduleId  INT       IDENTITY(1, 1) NOT NULL,
+    MasterId    INT       NOT NULL,
+    BranchId    INT       NOT NULL,
+    WorkDate    DATE      NOT NULL,
+    StartTime   TIME(0)   NOT NULL,
+    EndTime     TIME(0)   NOT NULL,
+    CONSTRAINT PK_WorkSchedule          PRIMARY KEY (ScheduleId),
+    CONSTRAINT UQ_WorkSchedule          UNIQUE (MasterId, BranchId, WorkDate),
+    CONSTRAINT FK_WorkSchedule_Master   FOREIGN KEY (MasterId)
+        REFERENCES dbo.Masters (MasterId) ON DELETE NO ACTION,
+    CONSTRAINT FK_WorkSchedule_Branch   FOREIGN KEY (BranchId)
+        REFERENCES dbo.Branches (BranchId) ON DELETE NO ACTION,
+    CONSTRAINT CK_WorkSchedule_Time     CHECK (StartTime < EndTime)
+);
+GO
 
-## В.9 Тест-кейс 9 — `SlotServiceTests.LunchInterval_BlocksOverlappingSlots`
+-- =============================================================================
+-- Clients — Клиенты
+-- =============================================================================
+CREATE TABLE dbo.Clients (
+    ClientId      INT           IDENTITY(1, 1) NOT NULL,
+    PersonaId     INT           NOT NULL,
+    LastVisitDate DATETIME2(0)  NULL,
+    AverageCheck  DECIMAL(10,2) NULL,
+    CONSTRAINT PK_Clients           PRIMARY KEY (ClientId),
+    CONSTRAINT UQ_Clients_PersonaId UNIQUE (PersonaId),
+    CONSTRAINT FK_Clients_Persona   FOREIGN KEY (PersonaId)
+        REFERENCES dbo.Persona (PersonaId) ON DELETE NO ACTION
+);
+GO
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что интервал расписания типа `Lunch` блокирует пересекающиеся стартовые слоты |
-| Предусловие           | У мастера на дату заданы два интервала: `Work` 10:00–14:00 и `Lunch` 12:00–13:00          |
-| Шаги                  | 1. Вызвать `GetAvailableSlotsAsync` для услуги длительностью 60 минут                    |
-| Ожидаемый результат   | В возврате отсутствуют слоты, чей интервал `[start, start+60)` пересекает 12:00–13:00     |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+-- =============================================================================
+-- Bookings — Записи (онлайн и офлайн)
+-- =============================================================================
+CREATE TABLE dbo.Bookings (
+    BookingId   INT           IDENTITY(1, 1) NOT NULL,
+    ClientId    INT           NULL,
+    BranchId    INT           NOT NULL,
+    MasterId    INT           NOT NULL,
+    ServiceId   INT           NOT NULL,
+    StartAt     DATETIME2(0)  NOT NULL,
+    EndAt       DATETIME2(0)  NOT NULL,
+    Status      INT           NOT NULL CONSTRAINT DF_Bookings_Status DEFAULT (0),
+    GuestName   NVARCHAR(200) NULL,
+    GuestPhone  NVARCHAR(20)  NULL,
+    Notes       NVARCHAR(MAX) NULL,
+    CreatedAt   DATETIME2(0)  NOT NULL CONSTRAINT DF_Bookings_CreatedAt DEFAULT (SYSDATETIME()),
+    CONSTRAINT PK_Bookings           PRIMARY KEY (BookingId),
+    CONSTRAINT FK_Bookings_Client    FOREIGN KEY (ClientId)  REFERENCES dbo.Clients  (ClientId)  ON DELETE NO ACTION,
+    CONSTRAINT FK_Bookings_Branch    FOREIGN KEY (BranchId)  REFERENCES dbo.Branches (BranchId)  ON DELETE NO ACTION,
+    CONSTRAINT FK_Bookings_Master    FOREIGN KEY (MasterId)  REFERENCES dbo.Masters  (MasterId)  ON DELETE NO ACTION,
+    CONSTRAINT FK_Bookings_Service   FOREIGN KEY (ServiceId) REFERENCES dbo.Services (ServiceId) ON DELETE NO ACTION,
+    CONSTRAINT CK_Bookings_Time      CHECK (StartAt < EndAt),
+    CONSTRAINT CK_Bookings_GuestOrClient CHECK (
+        (ClientId IS NOT NULL) OR (GuestName IS NOT NULL AND GuestPhone IS NOT NULL)
+    )
+);
+GO
 
-## В.10 Тест-кейс 10 — `SlotServiceTests.CancelledBooking_DoesNotBlockSlots`
+-- =============================================================================
+-- Visits — История фактических визитов
+-- =============================================================================
+CREATE TABLE dbo.Visits (
+    VisitId     INT           IDENTITY(1, 1) NOT NULL,
+    BookingId   INT           NOT NULL,
+    ClientId    INT           NULL,
+    VisitDate   DATETIME2(0)  NOT NULL,
+    TotalAmount DECIMAL(10,2) NOT NULL,
+    Notes       NVARCHAR(MAX) NULL,
+    CONSTRAINT PK_Visits         PRIMARY KEY (VisitId),
+    CONSTRAINT FK_Visits_Booking FOREIGN KEY (BookingId)
+        REFERENCES dbo.Bookings (BookingId) ON DELETE NO ACTION,
+    CONSTRAINT FK_Visits_Client  FOREIGN KEY (ClientId)
+        REFERENCES dbo.Clients (ClientId) ON DELETE NO ACTION,
+    CONSTRAINT CK_Visits_Total   CHECK (TotalAmount >= 0)
+);
+GO
+```
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что отменённая запись (`Status = Cancelled`) не учитывается при расчёте слотов |
-| Предусловие           | В БД создана запись 11:00–12:00 со статусом `Cancelled`                                  |
-| Шаги                  | 1. Вызвать `GetAvailableSlotsAsync` для услуги длительностью 60 минут                    |
-| Ожидаемый результат   | Слот 11:00 присутствует в результате                                                     |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+## В.4 Индексы
 
-## В.11 Тест-кейс 11 — `SlotServiceTests.ShortService_HasMoreSlots`
+Для оптимизации частых запросов созданы дополнительные некластеризованные индексы:
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что при уменьшении длительности услуги в свободное окно помещается больше слотов |
-| Предусловие           | Заведены две услуги длительностью 60 минут и 15 минут, рабочее окно 10:00–14:00           |
-| Шаги                  | 1. Получить число слотов для услуги 60 минут. 2. Получить число слотов для услуги 15 минут. |
-| Ожидаемый результат   | Число слотов для услуги 15 минут строго больше, чем для услуги 60 минут                   |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+```sql
+CREATE INDEX IX_Bookings_BranchMasterStart   ON dbo.Bookings (BranchId, MasterId, StartAt);
+CREATE INDEX IX_Bookings_ClientStart         ON dbo.Bookings (ClientId, StartAt) WHERE ClientId IS NOT NULL;
+CREATE INDEX IX_WorkSchedule_BranchDate      ON dbo.WorkSchedule (BranchId, WorkDate);
+CREATE INDEX IX_Visits_ClientDate            ON dbo.Visits (ClientId, VisitDate) WHERE ClientId IS NOT NULL;
+GO
+```
 
-## В.12 Тест-кейс 12 — `SlotServiceTests.NoWorkSchedule_ReturnsEmpty`
+## В.5 Особенности реализации
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что при отсутствии расписания у мастера на запрошенную дату возвращается пустой результат |
-| Предусловие           | У мастера в БД нет ни одного `WorkSchedule` на запрошенную дату                          |
-| Шаги                  | 1. Вызвать `GetAvailableSlotsAsync` для произвольной услуги                              |
-| Ожидаемый результат   | Возвращён пустой список                                                                 |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+– Каскадное удаление в MSSQL запрещено для таблицы `Bookings`, так как она содержит четыре внешних ключа в разные таблицы — комбинация каскадных правил приводит к ошибке *multiple cascade paths*. Удаление зависимых записей выполняется на уровне приложения либо через soft-delete (сохранение записи со статусом `Cancelled`).
 
-## В.13 Тест-кейс 13 — `SlotServiceTests.UnknownService_ReturnsEmpty`
+– Длина строковых полей выбрана из расчёта поддержки кириллицы и латиницы в одном экземпляре сервера, тип данных — `NVARCHAR` (Unicode UCS-2).
 
-| Поле                  | Значение                                                                                |
-|-----------------------|-----------------------------------------------------------------------------------------|
-| Цель тестирования     | Проверить, что при запросе слотов для несуществующей услуги возвращается пустой список   |
-| Предусловие           | Передан `serviceId`, отсутствующий в таблице `Services`                                  |
-| Шаги                  | 1. Вызвать `GetAvailableSlotsAsync(masterId, serviceId=999999, branchId, date)`          |
-| Ожидаемый результат   | Возвращён пустой список                                                                 |
-| Фактический результат | Соответствует ожидаемому                                                                |
-| Статус                | Пройден                                                                                  |
+– Для гостевых записей (без аккаунта пользователя) поля `GuestName` и `GuestPhone` обязательны, иначе запись отклоняется ограничением `CK_Bookings_GuestOrClient`. После регистрации гостя его записи могут быть привязаны к `Clients` через UPDATE `ClientId` по совпадению телефона.
+
+– Тип `DECIMAL(10,2)` выбран для денежных сумм, обеспечивает точность до копейки в диапазоне до 99 999 999,99 руб., что достаточно для предметной области.

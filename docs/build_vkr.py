@@ -59,6 +59,8 @@ PZ_FILES = [
     "prilozhenie-a.md",
     "prilozhenie-b.md",
     "prilozhenie-v.md",
+    "prilozhenie-g.md",
+    "prilozhenie-d.md",
 ]
 
 
@@ -94,15 +96,42 @@ def replace_text_in_runs(paragraph, old, new):
 
 
 def replace_in_doc(doc, mapping):
-    """Заменить плейсхолдеры в теле, header/footer, таблицах документа."""
+    """Заменить плейсхолдеры в теле, header/footer, таблицах документа.
+
+    Защита от повторной обработки одного и того же объекта: ячейки таблиц
+    могут быть горизонтально/вертикально объединены — в python-docx это
+    выглядит как несколько объектов Cell, ссылающихся на один и тот же
+    XML-элемент (w:tc). Без дедупликации каждый параграф такой ячейки
+    обрабатывается N раз и при «обогащающих» заменах (old ⊂ new) текст
+    дублируется. Поэтому ведём множество посещённых элементов."""
+
+    seen_paragraphs: list = []
+    seen_cells: list = []
+
+    def _has(seen, x):
+        # Сравниваем по identity самого XML-элемента lxml
+        # (id() недостаточно надёжен — временные обёртки могут переиспользовать
+        # один и тот же memory address).
+        for y in seen:
+            if y is x:
+                return True
+        return False
 
     def walk_paragraphs(container):
         for p in container.paragraphs:
+            el = p._element
+            if _has(seen_paragraphs, el):
+                continue
+            seen_paragraphs.append(el)
             for old, new in mapping.items():
                 replace_text_in_runs(p, old, new)
         for tbl in container.tables:
             for row in tbl.rows:
                 for cell in row.cells:
+                    tc = cell._tc
+                    if _has(seen_cells, tc):
+                        continue
+                    seen_cells.append(tc)
                     walk_paragraphs(cell)
 
     walk_paragraphs(doc)
@@ -270,18 +299,24 @@ def make_titul(out_path: Path):
 
 
 def make_zadanie(out_path: Path):
-    src = TPL_DIR / "Лист задания без граф. части_2026_.docx"
+    """Сборка Листа задания.
+
+    Используется заготовка от руководителя (с реквизитами руководителя,
+    председателя ЦМК и датами), в которой подменяется тема, ФИО студента,
+    список разделов ПЗ и список приложений на наши.
+    """
+    # Локальный импорт, чтобы не плодить циклов при импорте build_vkr из
+    # fill_zadanie.py.
+    from fill_zadanie import (
+        THEME_PARTS, STUDENT, fill_chapters, fill_appendices,
+    )
+
+    src = TPL_DIR.parent / "Лист задания_наш_2026_.docx"
     d = docx.Document(str(src))
-    # Заменим только основные данные: ФИО студента и тему ВКР.
-    # Список разделов ПЗ оставим как есть — руководитель скорректирует
-    # его в финальной версии под фактическое содержание работы.
-    mapping = {
-        "Сидоровой Анне Сергеевне": PLACEHOLDER,
-        "Разработка веб-системы для клиентов компании": THEME,
-        "ООО «ИмпульСС»": "",
-    }
-    replace_in_doc(d, mapping)
-    replace_in_doc(d, get_stamp_mapping())
+    replace_in_doc(d, THEME_PARTS)
+    replace_in_doc(d, STUDENT)
+    fill_chapters(d)
+    fill_appendices(d)
     d.save(str(out_path))
 
 
