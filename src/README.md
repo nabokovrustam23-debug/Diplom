@@ -1,6 +1,7 @@
-# Источный код CRM-системы «Тихий час»
+# Исходный код CRM-системы «Тихий час»
 
-ASP.NET Core 8 + EF Core 8 + MS SQL Server. Слоистая архитектура.
+ASP.NET Core 8 + EF Core 8. Целевая СУБД для ВКР — MS SQL Server 2019,
+локальный demo/dev-запуск по умолчанию использует SQLite.
 
 ## Структура решения
 
@@ -8,7 +9,7 @@ ASP.NET Core 8 + EF Core 8 + MS SQL Server. Слоистая архитекту�
 BarbershopCrm.sln
 ├── src/
 │   ├── BarbershopCrm.Domain/         ← классы сущностей (POCO), перечисления
-│   ├── BarbershopCrm.Infrastructure/ ← ApplicationDbContext, ApplicationUser, миграции
+│   ├── BarbershopCrm.Infrastructure/ ← ApplicationDbContext, ApplicationUser, сидеры
 │   └── BarbershopCrm.Web/            ← Razor Pages, ASP.NET Core Identity, Program.cs
 └── tests/
     └── BarbershopCrm.Tests/          ← xUnit + Moq + EFCore.InMemory
@@ -17,8 +18,8 @@ BarbershopCrm.sln
 | Проект | Назначение | Зависимости |
 |---|---|---|
 | `BarbershopCrm.Domain` | Чистая модель предметной области: 11 сущностей (`Persona`, `Branch`, `Service`, `Master`, `Client`, `MasterBranch`, `MasterService`, `WorkSchedule`, `Booking`, `Visit`) и перечисления (`Gender`, `BookingStatus`, `ScheduleType`). Не зависит от EF Core / Identity. | — |
-| `BarbershopCrm.Infrastructure` | `ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>` с Fluent-конфигурациями всех сущностей, `ApplicationUser` (расширяет Identity, добавляет FK на `Persona`), миграции EF Core. | EF Core, EF Core SqlServer, AspNetCore.Identity.EntityFrameworkCore, Domain |
-| `BarbershopCrm.Web` | Razor Pages + Identity UI. `Program.cs` подключает `ApplicationDbContext` через `UseSqlServer` и Identity. | Infrastructure, Domain |
+| `BarbershopCrm.Infrastructure` | `ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>` с Fluent-конфигурациями всех сущностей, `ApplicationUser` (расширяет Identity, добавляет FK на `Persona`). | EF Core, EF Core Sqlite/SqlServer, AspNetCore.Identity.EntityFrameworkCore, Domain |
+| `BarbershopCrm.Web` | Razor Pages + Identity UI. `Program.cs` подключает `ApplicationDbContext` через провайдер, указанный в конфигурации (`Sqlite` или `SqlServer`). | Infrastructure, Domain |
 | `BarbershopCrm.Tests` | Юнит-тесты доменной логики и сервисов. | xUnit, Moq, EFCore.InMemory, Web/Infrastructure/Domain |
 
 ## Команды
@@ -49,15 +50,24 @@ dotnet run --project src/BarbershopCrm.Web
 
 ## Подключение к БД
 
-`appsettings.json` указывает на LocalDB по умолчанию:
+`appsettings.json` по умолчанию использует SQLite:
 
 ```
-Server=(localdb)\MSSQLLocalDB;Database=BarbershopCrm;Trusted_Connection=True
+Database:Provider=Sqlite
+ConnectionStrings:DefaultConnection=Data Source=barbershop.db
 ```
 
-Для других окружений (полноценный MSSQL, Docker-контейнер) переопредели строку
-подключения через `appsettings.Local.json` (в .gitignore) или переменную
-окружения `ConnectionStrings__DefaultConnection`.
+Для целевого MSSQL-окружения переопредели провайдер и строку подключения через
+переменные окружения:
+
+```bash
+export Database__Provider=SqlServer
+export ConnectionStrings__DefaultConnection='Server=(localdb)\MSSQLLocalDB;Database=BarbershopCrm;Trusted_Connection=True;TrustServerCertificate=True'
+```
+
+Демо-учётка владельца также задаётся конфигурацией: `DemoOwner:Email` и
+`DemoOwner:Password`. Для защиты можно оставить значения из `appsettings.json`,
+для реального развёртывания их нужно переопределить переменными окружения.
 
 ## Соответствие разделам ПЗ
 
