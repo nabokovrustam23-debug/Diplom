@@ -15,13 +15,12 @@ public static class IdentitySeeder
     public const string MasterRole = "Master";
     public const string ClientRole = "Client";
 
-    public const string OwnerEmail = "owner@tihiychas.ru";
-    public const string OwnerPassword = "Owner!2026";
-
     public static async Task SeedAsync(
         ApplicationDbContext db,
         RoleManager<IdentityRole<int>> roleManager,
         UserManager<ApplicationUser> userManager,
+        string? ownerEmail,
+        string? ownerPassword,
         CancellationToken cancellationToken = default)
     {
         foreach (var role in new[] { OwnerRole, AdminRole, MasterRole, ClientRole })
@@ -32,10 +31,17 @@ public static class IdentitySeeder
             }
         }
 
-        if (await userManager.FindByEmailAsync(OwnerEmail) is null)
+        if (string.IsNullOrWhiteSpace(ownerEmail) || string.IsNullOrWhiteSpace(ownerPassword))
+        {
+            return;
+        }
+
+        ownerEmail = ownerEmail.Trim();
+
+        if (await userManager.FindByEmailAsync(ownerEmail) is null)
         {
             var persona = await db.Personas
-                .FirstOrDefaultAsync(p => p.Email == OwnerEmail, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Email == ownerEmail, cancellationToken);
 
             if (persona is null)
             {
@@ -44,7 +50,7 @@ public static class IdentitySeeder
                     LastName = "Владелец",
                     FirstName = "Сети",
                     Phone = "+79000000001",
-                    Email = OwnerEmail
+                    Email = ownerEmail
                 };
                 db.Personas.Add(persona);
                 await db.SaveChangesAsync(cancellationToken);
@@ -52,13 +58,13 @@ public static class IdentitySeeder
 
             var user = new ApplicationUser
             {
-                UserName = OwnerEmail,
-                Email = OwnerEmail,
+                UserName = ownerEmail,
+                Email = ownerEmail,
                 EmailConfirmed = true,
                 PersonaId = persona.PersonaId
             };
 
-            var result = await userManager.CreateAsync(user, OwnerPassword);
+            var result = await userManager.CreateAsync(user, ownerPassword);
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(user, OwnerRole);
