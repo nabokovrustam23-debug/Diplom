@@ -1,0 +1,22 @@
+@model int
+@{
+    var steps = new[]
+    {
+        "Филиал",
+        "Услуга",
+        "Мастер",
+        "Дата и время",
+        "Контакты"
+    };
+}
+
+<nav aria-label="Шаги записи">
+    <ol class="breadcrumb mt-3">
+        @for (var i = 0; i < steps.Length; i++)
+        {
+            var num = i + 1;
+            var cls = num == Model ? "fw-semibold" : "text-muted";
+            <li class="breadcrumb-item @cls">@num. @steps[i]</li>
+        }
+    </ol>
+</nav>

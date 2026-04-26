@@ -23,11 +23,10 @@ public static class DatabaseSeeder
         await db.SaveChangesAsync(ct);
 
         var masters = await SeedMastersAsync(db, ct);
+        await db.SaveChangesAsync(ct);
 
         SeedMasterBranches(db, masters, branches);
         SeedMasterServices(db, masters, services);
-        await db.SaveChangesAsync(ct);
-
         SeedWorkSchedules(db, masters, branches);
         await db.SaveChangesAsync(ct);
     }

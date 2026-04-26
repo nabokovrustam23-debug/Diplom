@@ -1,0 +1,40 @@
+@page "{bookingId:int}"
+@model BarbershopCrm.Web.Pages.Booking.SuccessModel
+@{
+    ViewData["Title"] = "Запись подтверждена";
+}
+
+<div class="alert alert-success mt-4">
+    <h4 class="alert-heading">Запись подтверждена!</h4>
+    <p class="mb-0">Мы ждём вас в указанное время. Если планы изменятся — свяжитесь с филиалом.</p>
+</div>
+
+@if (Model.Booking is not null)
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Детали записи №@Model.Booking.BookingId</h5>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Клиент</dt>
+                <dd class="col-sm-8">@Model.Booking.Client.Persona.LastName @Model.Booking.Client.Persona.FirstName</dd>
+
+                <dt class="col-sm-4">Телефон</dt>
+                <dd class="col-sm-8">@Model.Booking.Client.Persona.Phone</dd>
+
+                <dt class="col-sm-4">Филиал</dt>
+                <dd class="col-sm-8">@Model.Booking.Branch.Name, @Model.Booking.Branch.Address</dd>
+
+                <dt class="col-sm-4">Услуга</dt>
+                <dd class="col-sm-8">@Model.Booking.Service.Name (@Model.Booking.DurationMinutes мин., @Model.Booking.Service.Price.ToString("0") ₽)</dd>
+
+                <dt class="col-sm-4">Мастер</dt>
+                <dd class="col-sm-8">@Model.Booking.Master.Persona.LastName @Model.Booking.Master.Persona.FirstName</dd>
+
+                <dt class="col-sm-4">Дата и время</dt>
+                <dd class="col-sm-8">@Model.Booking.StartDateTime.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))</dd>
+            </dl>
+        </div>
+    </div>
+}
+
+<a class="btn btn-outline-primary mt-3" asp-page="/Index">На главную</a>

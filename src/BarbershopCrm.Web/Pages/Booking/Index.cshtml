@@ -1,0 +1,37 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.IndexModel
+@{
+    ViewData["Title"] = "Запись на приём — выбор филиала";
+}
+
+<partial name="_BookingSteps" model="1" />
+
+<h1 class="mb-4">Выбор филиала</h1>
+
+<p class="text-muted">Выберите барбершоп, в который вам удобнее прийти.</p>
+
+<div class="row g-3 mt-2">
+    @foreach (var branch in Model.Branches)
+    {
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">@branch.Name</h5>
+                    <p class="card-text text-muted mb-1"><i class="bi bi-geo-alt"></i> @branch.Address</p>
+                    @if (!string.IsNullOrWhiteSpace(branch.Phone))
+                    {
+                        <p class="card-text text-muted mb-1">@branch.Phone</p>
+                    }
+                    <p class="card-text text-muted">
+                        Часы работы: @branch.OpeningTime.ToString("HH:mm") – @branch.ClosingTime.ToString("HH:mm")
+                    </p>
+                    <a class="btn btn-primary mt-auto"
+                       asp-page="Service"
+                       asp-route-branchId="@branch.BranchId">
+                        Выбрать
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
