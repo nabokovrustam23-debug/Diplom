@@ -1,58 +1,65 @@
 @page
 @model BarbershopCrm.Web.Pages.Booking.ContactModel
 @{
-    ViewData["Title"] = "Запись на приём — контактные данные";
+    ViewData["Title"] = "Запись · Контакты";
 }
 
-<partial name="_BookingSteps" model="5" />
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="5" />
 
-<h1 class="mb-1">Контактные данные</h1>
-@if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
-{
-    <p class="text-muted mb-4">
-        @Model.Branch.Name ·
-        @Model.Service.Name (@Model.Service.DurationMinutes мин., @Model.Service.Price.ToString("0") ₽) ·
-        мастер @Model.Master.Persona.LastName @Model.Master.Persona.FirstName ·
-        @Model.Start.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
-    </p>
-}
+    <div class="eyebrow">Шаг 05</div>
+    <h2 class="mt-2 mb-1">Как с вами связаться?</h2>
+    @if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name
+            <span class="sep">·</span>
+            @Model.Master.Persona.LastName @Model.Master.Persona.FirstName
+            <span class="sep">·</span>
+            @Model.Start.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+        </p>
+    }
 
-<form method="post" class="col-md-8 col-lg-6">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"
-         style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+    <form method="post" class="col-form mt-4">
+        <div asp-validation-summary="ModelOnly" class="notice notice-danger" role="alert"
+             style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
 
-    <div class="mb-3">
-        <label asp-for="Input.LastName" class="form-label">Фамилия</label>
-        <input asp-for="Input.LastName" class="form-control" autocomplete="family-name" />
-        <span asp-validation-for="Input.LastName" class="text-danger"></span>
-    </div>
+        <div class="field">
+            <label asp-for="Input.LastName">Фамилия</label>
+            <input asp-for="Input.LastName" autocomplete="family-name" />
+            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+        </div>
 
-    <div class="mb-3">
-        <label asp-for="Input.FirstName" class="form-label">Имя</label>
-        <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" />
-        <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-    </div>
+        <div class="field">
+            <label asp-for="Input.FirstName">Имя</label>
+            <input asp-for="Input.FirstName" autocomplete="given-name" />
+            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+        </div>
 
-    <div class="mb-3">
-        <label asp-for="Input.Phone" class="form-label">Телефон</label>
-        <input asp-for="Input.Phone" class="form-control" type="tel" autocomplete="tel"
-               placeholder="+7 (999) 000-00-00" />
-        <span asp-validation-for="Input.Phone" class="text-danger"></span>
-    </div>
+        <div class="field">
+            <label asp-for="Input.Phone">Телефон</label>
+            <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00" />
+            <span asp-validation-for="Input.Phone" class="text-danger"></span>
+        </div>
 
-    <div class="mb-3">
-        <label asp-for="Input.Email" class="form-label">E-mail (необязательно)</label>
-        <input asp-for="Input.Email" class="form-control" type="email" autocomplete="email" />
-        <span asp-validation-for="Input.Email" class="text-danger"></span>
-    </div>
+        <div class="field">
+            <label asp-for="Input.Email">E-mail (необязательно)</label>
+            <input asp-for="Input.Email" type="email" autocomplete="email" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
 
-    <button type="submit" class="btn btn-primary">Подтвердить запись</button>
-    <a class="btn btn-link"
-       asp-page="Slot"
-       asp-route-branchId="@Model.BranchId"
-       asp-route-serviceId="@Model.ServiceId"
-       asp-route-masterId="@Model.MasterId">← Назад</a>
-</form>
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Подтвердить запись</button>
+            <a class="btn btn-outline"
+               asp-page="Slot"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="@Model.MasterId">← Другое время</a>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

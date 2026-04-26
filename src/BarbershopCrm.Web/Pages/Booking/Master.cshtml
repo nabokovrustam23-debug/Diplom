@@ -1,50 +1,57 @@
 @page
 @model BarbershopCrm.Web.Pages.Booking.MasterModel
 @{
-    ViewData["Title"] = "Запись на приём — выбор мастера";
+    ViewData["Title"] = "Запись · Мастер";
 }
 
-<partial name="_BookingSteps" model="3" />
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="3" />
 
-<h1 class="mb-1">Выбор мастера</h1>
-@if (Model.Branch is not null && Model.Service is not null)
-{
-    <p class="text-muted">@Model.Branch.Name · @Model.Service.Name (@Model.Service.DurationMinutes мин.)</p>
-}
+    <div class="eyebrow">Шаг 03</div>
+    <h2 class="mt-2 mb-1">К кому?</h2>
+    @if (Model.Branch is not null && Model.Service is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name
+            <span class="sep">·</span>
+            @Model.Service.DurationMinutes мин
+            <span class="sep">·</span>
+            @Model.Service.Price.ToString("0") ₽
+        </p>
+    }
 
-<div class="row g-3 mt-2">
-    @foreach (var master in Model.Masters)
-    {
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">@master.Persona.LastName @master.Persona.FirstName</h5>
-                    <p class="card-text text-muted mb-1">@master.Position</p>
-                    @if (!string.IsNullOrWhiteSpace(master.Bio))
-                    {
-                        <p class="card-text small">@master.Bio</p>
-                    }
-                    <a class="btn btn-primary mt-auto"
-                       asp-page="Slot"
-                       asp-route-branchId="@Model.BranchId"
-                       asp-route-serviceId="@Model.ServiceId"
-                       asp-route-masterId="@master.MasterId">
-                        Выбрать
-                    </a>
-                </div>
+    <div class="grid grid-cols-3">
+        @foreach (var master in Model.Masters)
+        {
+            <div class="master-card">
+                <div class="position">@master.Position</div>
+                <div class="name">@master.Persona.LastName @master.Persona.FirstName</div>
+                @if (!string.IsNullOrWhiteSpace(master.Bio))
+                {
+                    <div class="bio">@master.Bio</div>
+                }
+                else
+                {
+                    <div class="bio text-faint">Нет описания.</div>
+                }
+                <a class="btn btn-outline"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@master.MasterId">Выбрать →</a>
             </div>
-        </div>
-    }
-    @if (Model.Masters.Count == 0)
-    {
-        <div class="col-12">
-            <div class="alert alert-warning">
-                В выбранном филиале нет мастеров, оказывающих эту услугу.
+        }
+        @if (Model.Masters.Count == 0)
+        {
+            <div class="notice notice-warn" style="grid-column: 1 / -1;">
+                В этом филиале сейчас нет мастеров, оказывающих выбранную услугу.
             </div>
-        </div>
-    }
+        }
+    </div>
+
+    <a class="btn-ghost mt-5"
+       asp-page="Service"
+       asp-route-branchId="@Model.BranchId">← Другая услуга</a>
 </div>
-
-<a class="btn btn-link mt-3"
-   asp-page="Service"
-   asp-route-branchId="@Model.BranchId">← Назад к выбору услуги</a>

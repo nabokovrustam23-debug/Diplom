@@ -1,0 +1,50 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Branches.CreateModel
+@{
+    ViewData["Title"] = "Новый филиал";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Справочник / Филиалы</div>
+    <h2 class="mt-2 mb-5">Новый филиал</h2>
+
+    <form method="post" class="col-form">
+        <div asp-validation-summary="ModelOnly" class="notice notice-danger"
+             style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+        <div class="field">
+            <label asp-for="Input.Name">Название</label>
+            <input asp-for="Input.Name" placeholder="Тихий час — Центр" />
+            <span asp-validation-for="Input.Name" class="text-danger"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Address">Адрес</label>
+            <input asp-for="Input.Address" placeholder="Краснодар, ул. Красная, 32" />
+            <span asp-validation-for="Input.Address" class="text-danger"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Phone">Телефон</label>
+            <input asp-for="Input.Phone" type="tel" placeholder="+7 (861) 000-00-00" />
+            <span asp-validation-for="Input.Phone" class="text-danger"></span>
+        </div>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.OpeningTime">Открытие</label>
+                <input asp-for="Input.OpeningTime" type="time" />
+                <span asp-validation-for="Input.OpeningTime" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.ClosingTime">Закрытие</label>
+                <input asp-for="Input.ClosingTime" type="time" />
+                <span asp-validation-for="Input.ClosingTime" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a asp-page="Index" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
