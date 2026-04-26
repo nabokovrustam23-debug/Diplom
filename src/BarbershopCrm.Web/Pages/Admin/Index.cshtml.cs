@@ -36,9 +36,10 @@ public class IndexModel : PageModel
         BookingsToday = await _db.Bookings.CountAsync(b => b.StartDateTime >= today && b.StartDateTime < today.AddDays(1));
         BookingsThisWeek = await _db.Bookings.CountAsync(b => b.StartDateTime >= weekStart && b.Status != BookingStatus.Cancelled);
 
-        RevenueThisWeek = await _db.Bookings
+        var weekPrices = await _db.Bookings
             .Where(b => b.StartDateTime >= weekStart && b.Status == BookingStatus.Completed)
             .Join(_db.Services, b => b.ServiceId, s => s.ServiceId, (b, s) => s.Price)
-            .SumAsync();
+            .ToListAsync();
+        RevenueThisWeek = weekPrices.Sum();
     }
 }
