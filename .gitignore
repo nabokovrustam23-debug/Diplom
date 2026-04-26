@@ -51,3 +51,7 @@ appsettings.*.Local.json
 ~$*
 # Сборочный артефакт ПЗ — собирается локально через docs/build-docx.sh
 DIPLOM_*.docx
+
+# Build artifacts ВКР docx
+build/
+docs/__pycache__/
