@@ -42,3 +42,5 @@ appsettings.*.Local.json
 
 # User-specific Office temps
 ~$*
+# Сборочный артефакт ПЗ — собирается локально через docs/build-docx.sh
+DIPLOM_*.docx
