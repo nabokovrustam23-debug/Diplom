@@ -65,7 +65,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
         b.Entity<Branch>(e =>
         {
-            e.ToTable("Branches", t => t.HasCheckConstraint("CK_Branches_WorkHours", "[ClosingTime] > [OpeningTime]"));
+            e.ToTable("Branches", t => t.HasCheckConstraint("CK_Branches_WorkHours", "ClosingTime > OpeningTime"));
             e.HasKey(x => x.BranchId);
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
             e.Property(x => x.Address).HasMaxLength(500).IsRequired();
@@ -79,8 +79,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         {
             e.ToTable("Services", t =>
             {
-                t.HasCheckConstraint("CK_Services_Duration", "[DurationMinutes] > 0");
-                t.HasCheckConstraint("CK_Services_Price", "[Price] >= 0");
+                t.HasCheckConstraint("CK_Services_Duration", "DurationMinutes > 0");
+                t.HasCheckConstraint("CK_Services_Price", "Price >= 0");
             });
             e.HasKey(x => x.ServiceId);
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
@@ -116,7 +116,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.HasKey(x => x.ClientId);
             e.Property(x => x.Source).HasMaxLength(100);
             e.Property(x => x.Notes).HasMaxLength(1000);
-            e.Property(x => x.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             e.HasIndex(x => x.PersonaId).IsUnique();
             e.HasOne(x => x.Persona)
@@ -169,7 +169,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         b.Entity<WorkSchedule>(e =>
         {
             e.ToTable("WorkSchedules", t =>
-                t.HasCheckConstraint("CK_WorkSchedules_Times", "[EndTime] > [StartTime]"));
+                t.HasCheckConstraint("CK_WorkSchedules_Times", "EndTime > StartTime"));
             e.HasKey(x => x.WorkScheduleId);
             e.Property(x => x.ScheduleType).HasConversion<int>();
 
@@ -193,10 +193,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         b.Entity<Booking>(e =>
         {
             e.ToTable("Bookings", t =>
-                t.HasCheckConstraint("CK_Bookings_Duration", "[DurationMinutes] > 0"));
+                t.HasCheckConstraint("CK_Bookings_Duration", "DurationMinutes > 0"));
             e.HasKey(x => x.BookingId);
             e.Property(x => x.Status).HasConversion<int>().HasDefaultValue(BookingStatus.Created);
-            e.Property(x => x.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             e.HasIndex(x => new { x.MasterId, x.StartDateTime });
             e.HasIndex(x => x.ClientId);
@@ -228,11 +228,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         b.Entity<Visit>(e =>
         {
             e.ToTable("Visits", t =>
-                t.HasCheckConstraint("CK_Visits_Amount", "[TotalAmount] >= 0"));
+                t.HasCheckConstraint("CK_Visits_Amount", "TotalAmount >= 0"));
             e.HasKey(x => x.VisitId);
             e.Property(x => x.TotalAmount).HasColumnType("decimal(10, 2)");
             e.Property(x => x.MasterNotes).HasMaxLength(2000);
-            e.Property(x => x.CompletedAt).HasDefaultValueSql("SYSDATETIME()");
+            e.Property(x => x.CompletedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             e.HasIndex(x => x.BookingId).IsUnique();
             e.HasOne(x => x.Booking)

@@ -25,6 +25,13 @@ packages/
 .DS_Store
 Thumbs.db
 
+# SQLite local DB
+*.sqlite
+*.sqlite3
+barbershop.db
+barbershop.db-shm
+barbershop.db-wal
+
 # Logs / temp
 *.log
 *.tmp
