@@ -1,0 +1,63 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.SlotModel
+@{
+    ViewData["Title"] = "Запись на приём — выбор даты и времени";
+}
+
+<partial name="_BookingSteps" model="4" />
+
+<h1 class="mb-1">Выбор даты и времени</h1>
+@if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
+{
+    <p class="text-muted">
+        @Model.Branch.Name ·
+        @Model.Service.Name (@Model.Service.DurationMinutes мин., @Model.Service.Price.ToString("0") ₽) ·
+        мастер @Model.Master.Persona.LastName @Model.Master.Persona.FirstName
+    </p>
+}
+
+<h5 class="mt-3">Дата</h5>
+<div class="d-flex flex-wrap gap-2 mb-4">
+    @foreach (var date in Model.AvailableDates)
+    {
+        var isActive = Model.Date == date;
+        <a class="btn @(isActive ? "btn-primary" : "btn-outline-primary")"
+           asp-page="Slot"
+           asp-route-branchId="@Model.BranchId"
+           asp-route-serviceId="@Model.ServiceId"
+           asp-route-masterId="@Model.MasterId"
+           asp-route-date="@date.ToString("yyyy-MM-dd")">
+            @date.ToString("dd.MM (ddd)", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+        </a>
+    }
+</div>
+
+<h5>Время</h5>
+@if (Model.AvailableSlots.Count == 0)
+{
+    <div class="alert alert-warning">
+        На выбранную дату у мастера нет свободных слотов. Попробуйте другую дату.
+    </div>
+}
+else
+{
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var slot in Model.AvailableSlots)
+        {
+            var startIso = (Model.Date!.Value.ToDateTime(slot)).ToString("yyyy-MM-ddTHH:mm");
+            <a class="btn btn-outline-secondary"
+               asp-page="Contact"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-start="@startIso">
+                @slot.ToString("HH:mm")
+            </a>
+        }
+    </div>
+}
+
+<a class="btn btn-link mt-4"
+   asp-page="Master"
+   asp-route-branchId="@Model.BranchId"
+   asp-route-serviceId="@Model.ServiceId">← Назад к выбору мастера</a>

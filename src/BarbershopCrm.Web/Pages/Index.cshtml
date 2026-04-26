@@ -1,10 +1,28 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Главная";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="py-5 text-center">
+    <h1 class="display-4 mb-3">Тихий час</h1>
+    <p class="lead text-muted mb-4">Сеть барбершопов в Краснодаре и Сочи. Запишитесь онлайн за минуту — без регистрации.</p>
+    <a class="btn btn-primary btn-lg" asp-page="/Booking/Index">Записаться</a>
+</div>
+
+<hr />
+
+<div class="row g-4 mt-2">
+    <div class="col-md-4">
+        <h5>Несколько филиалов</h5>
+        <p class="text-muted">Выбирайте удобный филиал — с учётом адреса, графика и состава мастеров.</p>
+    </div>
+    <div class="col-md-4">
+        <h5>Свой мастер</h5>
+        <p class="text-muted">Каждый барбер ведёт собственное расписание — записывайтесь к тому, кому доверяете стрижку.</p>
+    </div>
+    <div class="col-md-4">
+        <h5>Гостевая запись</h5>
+        <p class="text-muted">Чтобы записаться, достаточно ввести имя и телефон. Личный кабинет — позже, если понадобится.</p>
+    </div>
 </div>
