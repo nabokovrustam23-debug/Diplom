@@ -1,0 +1,46 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Schedules.IndexModel
+@{
+    ViewData["Title"] = "Расписания мастеров";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Администрирование</div>
+    <h2 class="mt-2 mb-2">Расписания</h2>
+    <p class="text-muted mb-4">
+        Обзор активных исключений (отпуск / больничный / выходной) на ближайшие 60 дней.
+        Для детальной правки смен и блокировок откройте календарь конкретного мастера.
+    </p>
+
+    <partial name="../_AdminNav" />
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Мастер</th>
+                <th>Филиал</th>
+                <th>Отпуск</th>
+                <th>Больничный</th>
+                <th>Выходные</th>
+                <th>Ближайшее отсутствие</th>
+                <th class="actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>@r.FullName</td>
+                    <td class="text-muted">@r.BranchName</td>
+                    <td class="mono">@r.VacationCount</td>
+                    <td class="mono">@r.SickCount</td>
+                    <td class="mono">@r.DayOffCount</td>
+                    <td class="mono">@(r.NextAbsence?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="actions">
+                        <a class="action-link action-link--accent" asp-page="/Staff/Schedule" asp-route-masterId="@r.MasterId">Календарь →</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
