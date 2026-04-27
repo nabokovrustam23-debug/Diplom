@@ -1,19 +1,92 @@
 @page
+@using BarbershopCrm.Web.Pages.Admin.Schedules
 @model BarbershopCrm.Web.Pages.Admin.Schedules.IndexModel
 @{
     ViewData["Title"] = "Расписания мастеров";
+
+    (string label, string bg, string fg) CellStyle(IndexModel.CellKind k) => k switch
+    {
+        IndexModel.CellKind.Work => ("раб", "#e8ecdb", "#3d5632"),
+        IndexModel.CellKind.DayOff => ("вых", "#efe4d2", "#7a6c58"),
+        IndexModel.CellKind.Vacation => ("отп", "#e4d3c1", "#8a5a34"),
+        IndexModel.CellKind.SickLeave => ("бол", "#e9c9c9", "#8a3434"),
+        _ => ("—", "transparent", "#b7ada0")
+    };
+    var cul = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
 }
 
 <div class="container mt-5">
     <div class="eyebrow">Администрирование</div>
     <h2 class="mt-2 mb-2">Расписания</h2>
     <p class="text-muted mb-4">
-        Обзор активных исключений (отпуск / больничный / выходной) на ближайшие 60 дней.
-        Для детальной правки смен и блокировок откройте календарь конкретного мастера.
+        Сетка «мастер × день недели» для выбранной недели и обзор исключений
+        (отпуск / больничный / выходной) на ближайшие 60 дней.
+        Детальная правка — в календаре конкретного мастера.
     </p>
 
     <partial name="../_AdminNav" />
 
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm"
+           asp-page="Index"
+           asp-route-weekStart="@Model.EffectiveWeekStart.AddDays(-7).ToString("yyyy-MM-dd")">← Предыдущая</a>
+        <span class="btn btn-outline btn-sm is-active" style="pointer-events:none;">
+            @Model.EffectiveWeekStart.ToString("dd.MM") – @Model.EffectiveWeekStart.AddDays(6).ToString("dd.MM.yyyy")
+        </span>
+        <a class="btn btn-outline btn-sm"
+           asp-page="Index"
+           asp-route-weekStart="@Model.EffectiveWeekStart.AddDays(7).ToString("yyyy-MM-dd")">Следующая →</a>
+        <a class="btn btn-ghost btn-sm" asp-page="Index">Сегодня</a>
+    </div>
+
+    <table class="data-table mb-5">
+        <thead>
+            <tr>
+                <th style="min-width:200px;">Мастер</th>
+                @foreach (var d in Model.WeekDays)
+                {
+                    <th style="text-align:center;">
+                        <div style="font-weight:600;">@d.ToString("ddd", cul)</div>
+                        <div class="mono text-muted" style="font-size:.8rem;">@d.ToString("dd.MM")</div>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Calendar)
+            {
+                <tr>
+                    <td>
+                        <a asp-page="/Staff/Schedule" asp-route-masterId="@row.MasterId" style="color:inherit;">@row.FullName</a>
+                        <div class="text-muted" style="font-size:.8rem;">@row.BranchName</div>
+                    </td>
+                    @foreach (var cell in row.Days)
+                    {
+                        var style = CellStyle(cell.Kind);
+                        <td style="text-align:center;background:@style.bg;color:@style.fg;min-width:78px;">
+                            @if (cell.Kind == IndexModel.CellKind.Work && !string.IsNullOrEmpty(cell.Label))
+                            {
+                                <div class="mono" style="font-size:.78rem;">@cell.Label</div>
+                            }
+                            else
+                            {
+                                <span style="font-size:.82rem;">@style.label</span>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="text-muted" style="font-size:.8rem;">
+        <span style="background:#e8ecdb;color:#3d5632;padding:2px 6px;border-radius:3px;">раб</span> — рабочая смена ·
+        <span style="background:#efe4d2;color:#7a6c58;padding:2px 6px;border-radius:3px;">вых</span> — выходной ·
+        <span style="background:#e4d3c1;color:#8a5a34;padding:2px 6px;border-radius:3px;">отп</span> — отпуск ·
+        <span style="background:#e9c9c9;color:#8a3434;padding:2px 6px;border-radius:3px;">бол</span> — больничный
+    </p>
+
+    <h3 class="mt-5 mb-3">Исключения на 60 дней</h3>
     <table class="data-table">
         <thead>
             <tr>

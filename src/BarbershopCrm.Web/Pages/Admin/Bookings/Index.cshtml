@@ -123,9 +123,24 @@
         </div>
     </form>
 
+    @if (!string.IsNullOrEmpty(TempData["StatusMessage"] as string))
+    {
+        <div class="notice notice-success mb-3">
+            <p class="mb-0">@TempData["StatusMessage"]</p>
+        </div>
+    }
+
+    @* Форма массового завершения живёт отдельно; чекбоксы в таблице и
+       финальная кнопка привязаны к ней через атрибут form="bulk-form",
+       чтобы не ломать вложенность <form> внутри формы статусов по записи. *@
+    <form id="bulk-form" method="post" asp-page-handler="BulkComplete"></form>
+
     <table class="data-table">
         <thead>
             <tr>
+                <th style="width:32px;">
+                    <input type="checkbox" id="bulk-check-all" title="Выбрать всё" />
+                </th>
                 <th>№</th>
                 <th>Дата и время</th>
                 <th>Клиент</th>
@@ -140,6 +155,12 @@
             @foreach (var b in Model.Bookings)
             {
                 <tr>
+                    <td>
+                        @if (b.Status == BookingStatus.Confirmed)
+                        {
+                            <input type="checkbox" form="bulk-form" name="ids" value="@b.BookingId" class="bulk-check" />
+                        }
+                    </td>
                     <td class="mono">@b.BookingId.ToString("0000")</td>
                     <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
                     <td>
@@ -208,4 +229,22 @@
     {
         <p class="text-muted mt-3">Записей по выбранным фильтрам не найдено.</p>
     }
+
+    <div class="mt-3">
+        <button type="submit" form="bulk-form" class="btn btn-outline btn-sm"
+                onclick="return confirm('Завершить выбранные записи?');">
+            Завершить выбранные
+        </button>
+        <span class="text-muted" style="font-size:.85rem;">— работает только для подтверждённых записей.</span>
+    </div>
 </div>
+
+<script>
+    (function () {
+        var all = document.getElementById('bulk-check-all');
+        if (!all) return;
+        all.addEventListener('change', function () {
+            document.querySelectorAll('.bulk-check').forEach(function (c) { c.checked = all.checked; });
+        });
+    })();
+</script>

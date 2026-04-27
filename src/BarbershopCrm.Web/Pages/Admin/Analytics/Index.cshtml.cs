@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
@@ -44,20 +46,87 @@ public class IndexModel : PageModel
     public int UniqueClients { get; private set; }
     public int RepeatClients { get; private set; }
     public double RepeatShare { get; private set; }
+    public int NewClients { get; private set; }
+    public decimal AvgCheck { get; private set; }
+    public int AvgDurationMinutes { get; private set; }
+
+    /// <summary>Предупреждение валидации (например, «кастом без дат»).</summary>
+    public string? Warning { get; private set; }
 
     public IList<BranchRow> BranchRows { get; private set; } = new List<BranchRow>();
     public IList<MasterRow> MasterRows { get; private set; } = new List<MasterRow>();
     public IList<ServiceRow> ServiceRows { get; private set; } = new List<ServiceRow>();
+    public IList<DailyPoint> DailyPoints { get; private set; } = new List<DailyPoint>();
 
     public record BranchRow(int BranchId, string Name, int Total, int Completed, decimal Revenue, int NoShow);
     public record MasterRow(int MasterId, string FullName, string BranchName, int Completed, decimal Revenue, int WorkingMinutes, int BookedMinutes, double UtilizationPercent);
     public record ServiceRow(string Name, int Completed, decimal Revenue);
+    public record DailyPoint(DateOnly Date, int BookingsCount, decimal Revenue);
 
     public async Task OnGetAsync()
+    {
+        await LoadAsync();
+    }
+
+    /// <summary>Экспорт текущей аналитики в CSV: KPI по периоду + разрезы
+    /// по филиалам/мастерам. Удобен для сохранения снимка отчёта.</summary>
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        await LoadAsync();
+        var sb = new StringBuilder();
+        var cul = CultureInfo.InvariantCulture;
+        sb.AppendLine("Section;Key;Value");
+        sb.AppendLine($"Period;From;{EffectiveFrom:yyyy-MM-dd}");
+        sb.AppendLine($"Period;To;{EffectiveTo:yyyy-MM-dd}");
+        sb.AppendLine($"KPI;TotalBookings;{FunnelTotal}");
+        sb.AppendLine($"KPI;TotalRevenue;{TotalRevenue.ToString(cul)}");
+        sb.AppendLine($"KPI;AvgCheck;{AvgCheck.ToString(cul)}");
+        sb.AppendLine($"KPI;AvgDurationMinutes;{AvgDurationMinutes}");
+        sb.AppendLine($"KPI;UniqueClients;{UniqueClients}");
+        sb.AppendLine($"KPI;NewClients;{NewClients}");
+        sb.AppendLine($"KPI;RepeatClients;{RepeatClients}");
+        sb.AppendLine($"Funnel;Created;{FunnelCreated}");
+        sb.AppendLine($"Funnel;Confirmed;{FunnelConfirmed}");
+        sb.AppendLine($"Funnel;Completed;{FunnelCompleted}");
+        sb.AppendLine($"Funnel;Cancelled;{FunnelCancelled}");
+        sb.AppendLine($"Funnel;NoShow;{FunnelNoShow}");
+
+        sb.AppendLine();
+        sb.AppendLine("Branch;Name;Total;Completed;Revenue;NoShow");
+        foreach (var r in BranchRows)
+            sb.AppendLine($"{r.BranchId};{r.Name};{r.Total};{r.Completed};{r.Revenue.ToString(cul)};{r.NoShow}");
+
+        sb.AppendLine();
+        sb.AppendLine("Master;FullName;Branch;Completed;Revenue;WorkingMin;BookedMin;Utilization%");
+        foreach (var r in MasterRows)
+            sb.AppendLine($"{r.MasterId};{r.FullName};{r.BranchName};{r.Completed};{r.Revenue.ToString(cul)};{r.WorkingMinutes};{r.BookedMinutes};{r.UtilizationPercent.ToString(cul)}");
+
+        sb.AppendLine();
+        sb.AppendLine("Date;Bookings;Revenue");
+        foreach (var p in DailyPoints)
+            sb.AppendLine($"{p.Date:yyyy-MM-dd};{p.BookingsCount};{p.Revenue.ToString(cul)}");
+
+        // BOM чтобы Excel сразу подхватывал UTF-8.
+        var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+        return File(bytes, "text/csv", $"analytics-{EffectiveFrom:yyyyMMdd}-{EffectiveTo:yyyyMMdd}.csv");
+    }
+
+    private async Task LoadAsync()
     {
         Branches = await _db.Branches.AsNoTracking().OrderBy(b => b.Name).ToListAsync();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        if (Period == "custom" && (From is null || To is null))
+        {
+            Warning = "Для произвольного периода заполните обе даты. Показан последний 7 дней.";
+            Period = null;
+        }
+        if (Period == "custom" && From is not null && To is not null && From > To)
+        {
+            Warning = "Дата «с» позднее даты «по». Даты переставлены.";
+            (From, To) = (To, From);
+        }
+
         (EffectiveFrom, EffectiveTo) = Period switch
         {
             "today" => (today, today),
@@ -88,14 +157,50 @@ public class IndexModel : PageModel
         FunnelCancelled = bookings.Count(b => b.Status == BookingStatus.Cancelled);
         FunnelNoShow = bookings.Count(b => b.Status == BookingStatus.NoShow);
 
-        TotalRevenue = bookings.Where(b => b.Status == BookingStatus.Completed)
-            .Sum(b => b.Service.Price);
+        var completedBookings = bookings.Where(b => b.Status == BookingStatus.Completed).ToList();
+        TotalRevenue = completedBookings.Sum(b => b.Service.Price);
+        AvgCheck = completedBookings.Count > 0
+            ? Math.Round(TotalRevenue / completedBookings.Count, 0)
+            : 0m;
+        AvgDurationMinutes = completedBookings.Count > 0
+            ? (int)Math.Round(completedBookings.Average(b => b.DurationMinutes))
+            : 0;
 
         NoShowRate = FunnelTotal > 0 ? 100.0 * FunnelNoShow / FunnelTotal : 0;
         CancelRate = FunnelTotal > 0 ? 100.0 * FunnelCancelled / FunnelTotal : 0;
 
         var uniqueClientIds = bookings.Select(b => b.ClientId).Distinct().ToList();
         UniqueClients = uniqueClientIds.Count;
+
+        // Новые клиенты периода: у кого самая первая запись в сети попадает в период.
+        if (uniqueClientIds.Count > 0)
+        {
+            var firstBookingByClient = await _db.Bookings
+                .AsNoTracking()
+                .Where(b => uniqueClientIds.Contains(b.ClientId))
+                .GroupBy(b => b.ClientId)
+                .Select(g => new { ClientId = g.Key, First = g.Min(x => x.StartDateTime) })
+                .ToListAsync();
+            NewClients = firstBookingByClient
+                .Count(x => x.First >= start && x.First < endExclusive);
+        }
+
+        // Суточный разрез: сколько записей создано и сколько выручки завершённых визитов.
+        var byDay = bookings.GroupBy(b => DateOnly.FromDateTime(b.StartDateTime))
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var allDays = Enumerable.Range(0, EffectiveTo.DayNumber - EffectiveFrom.DayNumber + 1)
+            .Select(i => EffectiveFrom.AddDays(i))
+            .ToList();
+        DailyPoints = allDays
+            .Select(d =>
+            {
+                var day = byDay.TryGetValue(d, out var list) ? list : new List<Domain.Entities.Booking>();
+                return new DailyPoint(
+                    d,
+                    day.Count,
+                    day.Where(x => x.Status == BookingStatus.Completed).Sum(x => x.Service.Price));
+            })
+            .ToList();
 
         // «Повторный» считаем как клиента с ≥ 2 завершёнными визитами за всё время
         // (чтобы в маленькой витрине выборки не потерять полезный показатель).

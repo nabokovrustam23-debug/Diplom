@@ -113,15 +113,37 @@ public class IndexModel : PageModel
             b.Status = status;
             await _db.SaveChangesAsync();
         }
-        return RedirectToPage(new
-        {
-            StatusFilter,
-            DateFilter,
-            FromDate = FromDate?.ToString("yyyy-MM-dd"),
-            ToDate = ToDate?.ToString("yyyy-MM-dd"),
-            BranchId,
-            MasterId,
-            Q
-        });
+        return RedirectAfterMutation();
     }
+
+    /// <summary>
+    /// Массовое завершение записей: в конце дня администратор отмечает пачку
+    /// подтверждённых визитов как Completed одним действием вместо построчных
+    /// кликов. Работает только для записей в статусе Confirmed — Created/No-show
+    /// сюда не попадают.
+    /// </summary>
+    public async Task<IActionResult> OnPostBulkCompleteAsync(int[] ids)
+    {
+        if (ids is { Length: > 0 })
+        {
+            var targets = await _db.Bookings
+                .Where(b => ids.Contains(b.BookingId) && b.Status == BookingStatus.Confirmed)
+                .ToListAsync();
+            foreach (var b in targets) b.Status = BookingStatus.Completed;
+            await _db.SaveChangesAsync();
+            TempData["StatusMessage"] = $"Завершено записей: {targets.Count}.";
+        }
+        return RedirectAfterMutation();
+    }
+
+    private IActionResult RedirectAfterMutation() => RedirectToPage(new
+    {
+        StatusFilter,
+        DateFilter,
+        FromDate = FromDate?.ToString("yyyy-MM-dd"),
+        ToDate = ToDate?.ToString("yyyy-MM-dd"),
+        BranchId,
+        MasterId,
+        Q
+    });
 }
