@@ -17,6 +17,38 @@
         <div class="notice notice-success mb-3">@Model.StatusMessage</div>
     }
 
+    <form method="get" class="filter-form mb-3">
+        <div class="filter-row">
+            <div class="field">
+                <label>Роль</label>
+                <select name="RoleFilter" onchange="this.form.submit()">
+                    <option value="">Любая</option>
+                    @foreach (var r in BarbershopCrm.Web.Pages.Admin.Users.IndexModel.AllRoles)
+                    {
+                        <option value="@r" selected="@(Model.RoleFilter == r)">
+                            @BarbershopCrm.Web.Pages.Admin.Users.IndexModel.RoleLabel(r)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Поиск</label>
+                <input type="text" name="Q" value="@Model.Q" placeholder="email / имя / телефон" />
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-outline btn-sm">Применить</button>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.Q))
+            {
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <a asp-page="Index" class="btn btn-ghost btn-sm">Сбросить</a>
+                </div>
+            }
+        </div>
+    </form>
+
     <table class="data-table">
         <thead>
             <tr>

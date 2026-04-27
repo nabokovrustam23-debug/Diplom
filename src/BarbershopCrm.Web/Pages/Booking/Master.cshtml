@@ -60,12 +60,22 @@
         @foreach (var card in Model.Masters)
         {
             var isBusy = card.NextSlot is null;
+            // «Загружен»: ближайшее окно дальше, чем через 5 дней. Не блокируем
+            // выбор, но подсказываем клиенту, что время ожидания значимое.
+            var isHeavilyBooked = !isBusy
+                && card.NextSlot!.Value.Date > DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(5);
             <div class="master-card @(isBusy ? "master-card--busy" : null)">
                 <div class="master-avatar">
                     @card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]
                 </div>
                 <div class="position">@card.Master.Position</div>
-                <div class="name">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
+                <div class="name">
+                    @card.Master.Persona.LastName @card.Master.Persona.FirstName
+                    @if (isHeavilyBooked)
+                    {
+                        <span class="badge badge-warn" style="margin-left:6px;font-size:.65rem;">загружен</span>
+                    }
+                </div>
                 @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
                 {
                     <div class="bio">@card.Master.Bio</div>

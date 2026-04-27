@@ -866,6 +866,7 @@ p { margin: 0 0 1em 0; }
 .badge-accent { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .badge-success { border-color: var(--success); color: var(--success); background: var(--success-soft); }
 .badge-danger { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.badge-warn { border-color: #c88f4d; color: #8a5a34; background: #f5e7d4; }
 
 /* ==== Утилиты ==== */
 .mt-0 { margin-top: 0 !important; }
@@ -1328,6 +1329,13 @@ body { min-height: 100vh; }
   position: sticky; top: 20px;
   padding: 18px 20px; background: var(--paper); border: 1px solid var(--border);
   border-radius: 16px;
+}
+
+/* На узких экранах sticky-талон становится обычной карточкой сверху
+   (перекрывал бы контент и прятался за шапкой при скролле). */
+@media (max-width: 720px) {
+  .summary-card { position: static; margin-bottom: 16px; }
+  .ticket-card { position: static; }
 }
 .summary-card h4 { margin: 0 0 12px 0; font-size: 1rem; }
 .summary-card dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 12px; }

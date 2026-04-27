@@ -30,6 +30,19 @@ public class DetailsModel : PageModel
     [BindProperty]
     public string? Notes { get; set; }
 
+    [BindProperty]
+    public string? Source { get; set; }
+
+    /// <summary>Предустановленные источники привлечения + «Другое».</summary>
+    public static readonly IReadOnlyList<string> SourceOptions = new[]
+    {
+        "Инстаграм",
+        "Рекомендация",
+        "Прохожий",
+        "Сайт",
+        "Другое"
+    };
+
     [TempData] public string? StatusMessage { get; set; }
 
     public int CompletedCount => Bookings.Count(b => b.Status == BookingStatus.Completed);
@@ -41,6 +54,7 @@ public class DetailsModel : PageModel
     {
         if (!await LoadAsync()) return RedirectToPage("Index");
         Notes = Client!.Notes;
+        Source = Client!.Source;
         return Page();
     }
 
@@ -50,9 +64,10 @@ public class DetailsModel : PageModel
         if (client is null) return RedirectToPage("Index");
 
         client.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim();
+        client.Source = string.IsNullOrWhiteSpace(Source) ? null : Source.Trim();
         await _db.SaveChangesAsync();
 
-        StatusMessage = "Заметки сохранены.";
+        StatusMessage = "Карточка сохранена.";
         return RedirectToPage(new { Id });
     }
 

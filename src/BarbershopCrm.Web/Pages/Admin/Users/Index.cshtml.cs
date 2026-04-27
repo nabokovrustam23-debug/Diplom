@@ -33,6 +33,9 @@ public class IndexModel : PageModel
 
     public IList<UserRow> Users { get; private set; } = new List<UserRow>();
 
+    [BindProperty(SupportsGet = true)] public string? RoleFilter { get; set; }
+    [BindProperty(SupportsGet = true)] public string? Q { get; set; }
+
     [TempData] public string? StatusMessage { get; set; }
 
     public record UserRow(
@@ -65,7 +68,22 @@ public class IndexModel : PageModel
                 role));
         }
 
-        Users = rows;
+        // Фильтры: по роли и простой полнотекстовый поиск по email/имени/телефону.
+        IEnumerable<UserRow> filtered = rows;
+        if (!string.IsNullOrWhiteSpace(RoleFilter) && AllRoles.Contains(RoleFilter))
+        {
+            filtered = filtered.Where(r => r.RoleCode == RoleFilter);
+        }
+        if (!string.IsNullOrWhiteSpace(Q))
+        {
+            var needle = Q.Trim();
+            filtered = filtered.Where(r =>
+                r.Email.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                || r.FullName.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                || r.Phone.Contains(needle));
+        }
+
+        Users = filtered.ToList();
     }
 
     public async Task<IActionResult> OnPostSetRoleAsync(int userId, string role)
