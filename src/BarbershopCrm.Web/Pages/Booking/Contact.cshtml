@@ -22,62 +22,80 @@
         </p>
     }
 
-    <form method="post" class="col-form mt-4">
-        <div asp-validation-summary="ModelOnly" class="notice notice-danger" role="alert"
-             style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
-
-        <div class="field">
-            <label asp-for="Input.LastName">Фамилия</label>
-            <input asp-for="Input.LastName" autocomplete="family-name" />
-            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+    <form method="post" class="booking-contact-layout mt-4">
+        <div class="ticket-card">
+            <div class="ticket-label">Талон визита</div>
+            <h3>@Model.Service?.Name</h3>
+            <dl>
+                <dt>Филиал</dt>
+                <dd>@Model.Branch?.Name</dd>
+                <dt>Мастер</dt>
+                <dd>@Model.Master?.Persona.LastName @Model.Master?.Persona.FirstName</dd>
+                <dt>Дата</dt>
+                <dd>@Model.Start.ToString("dd.MM.yyyy · HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))</dd>
+                <dt>Стоимость</dt>
+                <dd>@Model.Service?.Price.ToString("0") ₽</dd>
+            </dl>
+            <div class="quiet-ticket-note">Можно выбрать «Прошу не разговаривать» — мастер увидит пожелание.</div>
         </div>
 
-        <div class="field">
-            <label asp-for="Input.FirstName">Имя</label>
-            <input asp-for="Input.FirstName" autocomplete="given-name" />
-            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-        </div>
+        <div class="col-form">
+            <div asp-validation-summary="ModelOnly" class="notice notice-danger" role="alert"
+                 style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
 
-        <div class="field">
-            <label asp-for="Input.Phone">Телефон</label>
-            <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00" />
-            <span asp-validation-for="Input.Phone" class="text-danger"></span>
-        </div>
-
-        <div class="field">
-            <label asp-for="Input.Email">E-mail (необязательно)</label>
-            <input asp-for="Input.Email" type="email" autocomplete="email" />
-            <span asp-validation-for="Input.Email" class="text-danger"></span>
-        </div>
-
-        <div class="field">
-            <label>Пожелания (необязательно)</label>
-            <div class="wishes-grid">
-                @foreach (var option in BarbershopCrm.Web.Pages.Booking.ContactModel.WishOptions)
-                {
-                    var checkedAttr = Model.Input.Wishes.Contains(option) ? "checked" : null;
-                    <label class="wish-chip">
-                        <input type="checkbox" name="Input.Wishes" value="@option" checked="@checkedAttr" />
-                        <span>@option</span>
-                    </label>
-                }
+            <div class="field">
+                <label asp-for="Input.LastName">Фамилия</label>
+                <input asp-for="Input.LastName" autocomplete="family-name" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
             </div>
-        </div>
 
-        <div class="field">
-            <label asp-for="Input.Notes">Комментарий мастеру (необязательно)</label>
-            <textarea asp-for="Input.Notes" rows="2" maxlength="500"
-                      placeholder="Например: «прошлый раз делали fade на 1.5 — повторить»"></textarea>
-            <span asp-validation-for="Input.Notes" class="text-danger"></span>
-        </div>
+            <div class="field">
+                <label asp-for="Input.FirstName">Имя</label>
+                <input asp-for="Input.FirstName" autocomplete="given-name" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
 
-        <div class="flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary">Подтвердить запись</button>
-            <a class="btn btn-outline"
-               asp-page="Slot"
-               asp-route-branchId="@Model.BranchId"
-               asp-route-serviceId="@Model.ServiceId"
-               asp-route-masterId="@Model.MasterId">← Другое время</a>
+            <div class="field">
+                <label asp-for="Input.Phone">Телефон</label>
+                <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00" />
+                <span asp-validation-for="Input.Phone" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Email">E-mail (необязательно)</label>
+                <input asp-for="Input.Email" type="email" autocomplete="email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label>Пожелания (необязательно)</label>
+                <div class="wishes-grid">
+                    @foreach (var option in BarbershopCrm.Web.Pages.Booking.ContactModel.WishOptions)
+                    {
+                        var checkedAttr = Model.Input.Wishes.Contains(option) ? "checked" : null;
+                        <label class="wish-chip @(option == "Прошу не разговаривать" ? "wish-chip--quiet" : null)">
+                            <input type="checkbox" name="Input.Wishes" value="@option" checked="@checkedAttr" />
+                            <span>@option</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Notes">Комментарий мастеру (необязательно)</label>
+                <textarea asp-for="Input.Notes" rows="2" maxlength="500"
+                          placeholder="Например: «прошлый раз делали fade на 1.5 — повторить»"></textarea>
+                <span asp-validation-for="Input.Notes" class="text-danger"></span>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Подтвердить запись</button>
+                <a class="btn btn-outline"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId">← Другое время</a>
+            </div>
         </div>
     </form>
 </div>
