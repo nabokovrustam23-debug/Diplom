@@ -71,6 +71,21 @@
                     </td>
                 </tr>
             }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-muted" style="text-align:center;padding:24px;">
+                        @if (string.IsNullOrWhiteSpace(Model.Q))
+                        {
+                            <span>Клиенты появятся здесь после первых записей.</span>
+                        }
+                        else
+                        {
+                            <span>По запросу «<b>@Model.Q</b>» никого не нашли. Попробуйте только фамилию или номер без «+7».</span>
+                        }
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>

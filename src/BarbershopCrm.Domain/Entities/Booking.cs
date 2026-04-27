@@ -13,6 +13,7 @@ public class Booking
     public int DurationMinutes { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Created;
     public DateTime CreatedAt { get; set; }
+    public DateTime? RescheduledFromUtc { get; set; }
     public string? Notes { get; set; }
     public string? Wishes { get; set; }
 

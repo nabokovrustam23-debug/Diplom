@@ -140,28 +140,42 @@ public class IndexModel : PageModel
         var branchByMaster = await _db.MasterBranches
             .AsNoTracking()
             .Include(mb => mb.Branch)
+            .Where(mb => BranchId == null || BranchId == 0 || mb.BranchId == BranchId)
             .ToDictionaryAsync(mb => mb.MasterId, mb => mb.Branch.Name);
 
-        MasterRows = bookings
-            .GroupBy(b => new { b.MasterId, FullName = $"{b.Master.Persona.LastName} {b.Master.Persona.FirstName}" })
-            .Select(g =>
+        // Стартуем от списка активных мастеров (с учётом фильтра филиала),
+        // чтобы простаивавшие в период тоже отображались с 0% и были видны.
+        var allMasters = await _db.Masters
+            .AsNoTracking()
+            .Include(m => m.Persona)
+            .Where(m => m.IsActive && (BranchId == null || BranchId == 0 || branchByMaster.Keys.Contains(m.MasterId)))
+            .ToListAsync();
+
+        var bookingsByMaster = bookings
+            .GroupBy(b => b.MasterId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        MasterRows = allMasters
+            .Select(m =>
             {
-                var booked = g.Where(x => x.Status == BookingStatus.Completed || x.Status == BookingStatus.Confirmed)
+                var mb = bookingsByMaster.TryGetValue(m.MasterId, out var list) ? list : new List<Domain.Entities.Booking>();
+                var booked = mb.Where(x => x.Status == BookingStatus.Completed || x.Status == BookingStatus.Confirmed)
                     .Sum(x => x.DurationMinutes);
-                var working = workingByMaster.TryGetValue(g.Key.MasterId, out var w) ? w : 0;
+                var working = workingByMaster.TryGetValue(m.MasterId, out var w) ? w : 0;
                 var util = working > 0 ? Math.Round(100.0 * booked / working, 1) : 0;
-                var branch = branchByMaster.TryGetValue(g.Key.MasterId, out var b) ? b : "—";
+                var branch = branchByMaster.TryGetValue(m.MasterId, out var bn) ? bn : "—";
                 return new MasterRow(
-                    g.Key.MasterId,
-                    g.Key.FullName,
+                    m.MasterId,
+                    $"{m.Persona.LastName} {m.Persona.FirstName}",
                     branch,
-                    g.Count(x => x.Status == BookingStatus.Completed),
-                    g.Where(x => x.Status == BookingStatus.Completed).Sum(x => x.Service.Price),
+                    mb.Count(x => x.Status == BookingStatus.Completed),
+                    mb.Where(x => x.Status == BookingStatus.Completed).Sum(x => x.Service.Price),
                     working,
                     booked,
                     util);
             })
             .OrderByDescending(r => r.UtilizationPercent)
+            .ThenBy(r => r.FullName)
             .ToList();
 
         ServiceRows = bookings

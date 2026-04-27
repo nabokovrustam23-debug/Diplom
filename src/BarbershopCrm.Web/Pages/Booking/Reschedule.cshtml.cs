@@ -83,6 +83,11 @@ public class RescheduleModel : PageModel
             return RedirectToPage(new { BookingId = Current.BookingId, Date = newDate });
         }
 
+        // Сохраняем исходное время переноса для аудита и отображения клиенту.
+        if (Current.RescheduledFromUtc is null)
+        {
+            Current.RescheduledFromUtc = Current.StartDateTime;
+        }
         Current.StartDateTime = newDate.ToDateTime(newTime);
         // Сбрасываем статус на Created: мастеру нужно подтвердить перенос.
         if (Current.Status == BookingStatus.Confirmed) Current.Status = BookingStatus.Created;
@@ -90,6 +95,15 @@ public class RescheduleModel : PageModel
         await _db.SaveChangesAsync();
 
         TempData["StatusMessage"] = $"Запись перенесена на {newDate:dd.MM} в {newTime:HH\\:mm}.";
+        // Сотрудников отправляем в их рабочие экраны, клиента — в его кабинет.
+        if (User.IsInRole(IdentitySeeder.OwnerRole) || User.IsInRole(IdentitySeeder.AdminRole))
+        {
+            return RedirectToPage("/Admin/Bookings/Index");
+        }
+        if (User.IsInRole(IdentitySeeder.MasterRole))
+        {
+            return RedirectToPage("/Staff/Index");
+        }
         return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
     }
 

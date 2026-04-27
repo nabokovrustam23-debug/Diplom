@@ -3,25 +3,22 @@ using BarbershopCrm.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace BarbershopCrm.Web.Pages;
+namespace BarbershopCrm.Web.Pages.Branches;
 
+/// <summary>
+/// Публичный список филиалов. Нужен как посадочная для клиентов, которые
+/// попадают на `/Branches` (из поиска/истории) — раньше это был 404.
+/// </summary>
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _db;
 
-    public IndexModel(ApplicationDbContext db)
-    {
-        _db = db;
-    }
+    public IndexModel(ApplicationDbContext db) => _db = db;
 
     public IList<Branch> Branches { get; private set; } = new List<Branch>();
-    public int MasterCount { get; private set; }
-    public int ServiceCount { get; private set; }
 
     public async Task OnGetAsync()
     {
         Branches = await _db.Branches.AsNoTracking().OrderBy(b => b.Name).ToListAsync();
-        MasterCount = await _db.Masters.AsNoTracking().CountAsync(m => m.IsActive);
-        ServiceCount = await _db.Services.AsNoTracking().CountAsync(s => s.IsActive);
     }
 }

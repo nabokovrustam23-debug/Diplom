@@ -185,10 +185,19 @@
                         }
                         @if (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed)
                         {
+                            <a class="action-link action-link--accent"
+                               asp-page="/Booking/Reschedule"
+                               asp-route-bookingId="@b.BookingId">Перенести</a>
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Cancelled)" />
                                 <button type="submit" class="action-link action-link--danger">Отменить</button>
                             </form>
+                        }
+                        @if (b.RescheduledFromUtc.HasValue)
+                        {
+                            <div class="text-faint" style="font-size:.75rem;margin-top:2px;">
+                                перенесено с @b.RescheduledFromUtc.Value.ToString("dd.MM HH:mm")
+                            </div>
                         }
                     </td>
                 </tr>
