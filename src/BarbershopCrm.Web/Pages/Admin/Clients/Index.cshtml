@@ -36,16 +36,28 @@
 
     <p class="text-muted mb-2">Найдено: <span class="mono">@Model.Rows.Count</span></p>
 
+    @{
+        string SortArrow(string col) =>
+            (Model.Sort ?? "name") != col
+                ? ""
+                : ((Model.Dir ?? "asc") == "asc" ? " ↑" : " ↓");
+    }
     <table class="data-table">
         <thead>
             <tr>
-                <th>ФИО</th>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="name" asp-route-dir="@Model.ToggleDir("name")" style="color:inherit;">ФИО@SortArrow("name")</a>
+                </th>
                 <th>Телефон</th>
                 <th>E-mail</th>
                 <th>Источник</th>
                 <th>Первый визит</th>
-                <th>Визитов (всего / завершено)</th>
-                <th>Последний</th>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="visits" asp-route-dir="@Model.ToggleDir("visits")" style="color:inherit;">Визитов (всего / завершено)@SortArrow("visits")</a>
+                </th>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="lastVisit" asp-route-dir="@Model.ToggleDir("lastVisit")" style="color:inherit;">Последний@SortArrow("lastVisit")</a>
+                </th>
                 <th class="actions"></th>
             </tr>
         </thead>

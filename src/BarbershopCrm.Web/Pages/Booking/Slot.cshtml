@@ -2,6 +2,14 @@
 @model BarbershopCrm.Web.Pages.Booking.SlotModel
 @{
     ViewData["Title"] = "Запись · Дата и время";
+
+    // Переключение чипа: если он активен — снимаем, иначе добавляем.
+    string[] Toggle(string key)
+    {
+        var set = Model.Quick.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!set.Add(key)) set.Remove(key);
+        return set.ToArray();
+    }
 }
 
 <div class="container mt-5">
@@ -30,22 +38,31 @@
     <div class="public-filter-bar mt-4">
         <div class="public-filter-row">
             <div class="public-filter-label">Быстрый фильтр</div>
-            <a class="chip @(Model.Quick == null ? "is-active" : "")"
+            <a class="chip @(Model.Quick.Length == 0 ? "is-active" : "")"
                asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId">
                 Все слоты
             </a>
-            <a class="chip @(Model.Quick == "earliest" ? "is-active" : "")"
-               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="earliest">
-                Самое раннее
-            </a>
-            <a class="chip @(Model.Quick == "evening" ? "is-active" : "")"
-               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="evening">
-                Вечером
-            </a>
-            <a class="chip @(Model.Quick == "weekend" ? "is-active" : "")"
-               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="weekend">
-                В выходные
-            </a>
+            @{
+                var chips = new[]
+                {
+                    ("earliest", "Самое раннее", Model.FilterEarliest),
+                    ("morning", "Утром", Model.FilterMorning),
+                    ("day", "Днём", Model.FilterDay),
+                    ("evening", "Вечером", Model.FilterEvening),
+                    ("weekend", "В выходные", Model.FilterWeekend),
+                };
+            }
+            @foreach (var (key, label, on) in chips)
+            {
+                <a class="chip @(on ? "is-active" : "")"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId"
+                   asp-route-quick="@Toggle(key)">
+                    @label
+                </a>
+            }
         </div>
     </div>
 
@@ -70,8 +87,13 @@
     @if (Model.AvailableSlots.Count == 0)
     {
         <div class="notice notice-warn">
-            <h4>На эту дату свободных слотов нет.</h4>
-            <p class="mb-0 text-muted">Попробуйте другой день@(Model.IsAnyMaster ? "" : " или другого мастера").</p>
+            <h4>Свободных окон нет.</h4>
+            <p class="mb-0 text-muted">@(Model.EmptyHint ?? "Попробуйте другой день.")</p>
+            @if (Model.Quick.Length > 0)
+            {
+                <p class="mt-2 mb-0"><a class="btn btn-outline btn-sm"
+                   asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-date="@Model.Date?.ToString("yyyy-MM-dd")">Сбросить фильтры</a></p>
+            }
         </div>
     }
     else

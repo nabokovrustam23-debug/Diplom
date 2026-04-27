@@ -139,7 +139,7 @@ public class ContactModel : PageModel
         if (!available.Contains(time))
         {
             // Для дружелюбной ошибки подтягиваем ближайшее свободное окно.
-            SuggestedSlot = await _slots.GetNextAvailableSlotAsync(MasterId, BranchId, ServiceId, horizonDays: 14);
+            SuggestedSlot = await _slots.GetNextAvailableSlotAsync(MasterId, BranchId, ServiceId, horizonDays: SlotModel.HorizonDays);
             var suggestion = SuggestedSlot is null
                 ? "К сожалению, свободных слотов на ближайшие две недели не осталось."
                 : $"Ближайшее свободное окно — {SuggestedSlot.Value.Date:dd.MM} в {SuggestedSlot.Value.Time:HH\\:mm}.";
