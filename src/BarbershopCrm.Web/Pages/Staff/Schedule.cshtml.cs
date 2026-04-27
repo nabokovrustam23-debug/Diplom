@@ -110,6 +110,93 @@ public class ScheduleModel : PageModel
     }
 
     /// <summary>
+    /// Применяет шаблон расписания к текущей неделе: будни 10:00–20:00
+    /// (с обедом 13:00–14:00) и суббота 11:00–18:00, воскресенье — выходной.
+    /// Существующие «Work»/«Lunch»/«DayOff» на этой неделе удаляются
+    /// (отпуск и больничный — нет, они важнее). Удобно при первичной настройке
+    /// мастера или после длинного отсутствия.
+    /// </summary>
+    public async Task<IActionResult> OnPostApplyTemplateAsync(int masterId)
+    {
+        if (!await LoadContextAsync()) return Forbid();
+        if (User.IsInRole(IdentitySeeder.MasterRole) && CurrentMaster?.MasterId != masterId)
+        {
+            return Forbid();
+        }
+
+        var branchId = await _db.MasterBranches
+            .Where(mb => mb.MasterId == masterId)
+            .Select(mb => (int?)mb.BranchId)
+            .FirstOrDefaultAsync();
+        if (branchId is null)
+        {
+            ModelState.AddModelError(string.Empty, "Мастер не привязан ни к одному филиалу.");
+            await LoadWeekAsync();
+            return Page();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var monday = WeekStart ?? today.AddDays(-((int)today.DayOfWeek == 0 ? 6 : (int)today.DayOfWeek - 1));
+        var endExclusive = monday.AddDays(7);
+
+        // Убираем уже существующие смены/обеды/выходные на этой неделе,
+        // чтобы шаблон не накладывался поверх.
+        var existing = await _db.WorkSchedules
+            .Where(w => w.MasterId == masterId
+                && w.WorkDate >= monday && w.WorkDate < endExclusive
+                && (w.ScheduleType == ScheduleType.Work
+                    || w.ScheduleType == ScheduleType.Lunch
+                    || w.ScheduleType == ScheduleType.DayOff))
+            .ToListAsync();
+        _db.WorkSchedules.RemoveRange(existing);
+
+        for (var i = 0; i < 7; i++)
+        {
+            var d = monday.AddDays(i);
+            // Пн–Пт: смена 10:00–20:00 с обедом 13:00–14:00.
+            if (i < 5)
+            {
+                _db.WorkSchedules.Add(new WorkSchedule
+                {
+                    MasterId = masterId, BranchId = branchId.Value, WorkDate = d,
+                    StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(20, 0),
+                    ScheduleType = ScheduleType.Work
+                });
+                _db.WorkSchedules.Add(new WorkSchedule
+                {
+                    MasterId = masterId, BranchId = branchId.Value, WorkDate = d,
+                    StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(14, 0),
+                    ScheduleType = ScheduleType.Lunch
+                });
+            }
+            else if (i == 5)
+            {
+                // Сб 11:00–18:00 без обеда (короткая смена).
+                _db.WorkSchedules.Add(new WorkSchedule
+                {
+                    MasterId = masterId, BranchId = branchId.Value, WorkDate = d,
+                    StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(18, 0),
+                    ScheduleType = ScheduleType.Work
+                });
+            }
+            else
+            {
+                // Вс — выходной.
+                _db.WorkSchedules.Add(new WorkSchedule
+                {
+                    MasterId = masterId, BranchId = branchId.Value, WorkDate = d,
+                    StartTime = new TimeOnly(0, 0), EndTime = new TimeOnly(23, 59),
+                    ScheduleType = ScheduleType.DayOff
+                });
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        TempData["ScheduleMessage"] = "Шаблон применён к текущей неделе.";
+        return RedirectToPage(new { MasterId = masterId, WeekStart = monday.ToString("yyyy-MM-dd") });
+    }
+
+    /// <summary>
     /// Удаляет запись расписания (обычно — снятие исключения/блокировки).
     /// Доступно администратору, владельцу и самому мастеру.
     /// </summary>

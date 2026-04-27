@@ -6,4 +6,8 @@
 <nav class="admin-nav mb-5">
     <a class="@Active("/Staff/Index")" asp-page="/Staff/Index">Мои записи</a>
     <a class="@Active("/Staff/Schedule")" asp-page="/Staff/Schedule">Моё расписание</a>
+    @if (User.IsInRole("Master"))
+    {
+        <a class="@Active("/Staff/Profile")" asp-page="/Staff/Profile">Мой профиль</a>
+    }
 </nav>
