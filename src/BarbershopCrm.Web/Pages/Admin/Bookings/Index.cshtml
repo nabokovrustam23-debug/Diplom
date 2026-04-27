@@ -1,0 +1,97 @@
+@page
+@using BarbershopCrm.Domain.Enums
+@model BarbershopCrm.Web.Pages.Admin.Bookings.IndexModel
+@{
+    ViewData["Title"] = "Админка · Записи";
+    string Badge(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "badge",
+        BookingStatus.Confirmed => "badge badge-accent",
+        BookingStatus.Completed => "badge badge-success",
+        BookingStatus.Cancelled => "badge badge-danger",
+        BookingStatus.NoShow => "badge badge-danger",
+        _ => "badge"
+    };
+    string StatusRu(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "Создана",
+        BookingStatus.Confirmed => "Подтверждена",
+        BookingStatus.Completed => "Завершена",
+        BookingStatus.Cancelled => "Отменена",
+        BookingStatus.NoShow => "Не пришёл",
+        _ => s.ToString()
+    };
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Журнал</div>
+    <h2 class="mt-2 mb-2">Записи</h2>
+    <p class="text-muted mb-5">Последние 200 записей. Управление статусом — кнопками справа.</p>
+
+    <partial name="../_AdminNav" />
+
+    <div class="flex gap-2 mb-3">
+        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "" : "")"
+           asp-page="Index">Все</a>
+        @foreach (var s in Enum.GetValues<BookingStatus>())
+        {
+            <a class="btn btn-outline btn-sm" asp-page="Index" asp-route-statusFilter="@s.ToString()">@StatusRu(s)</a>
+        }
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Дата и время</th>
+                <th>Клиент</th>
+                <th>Услуга</th>
+                <th>Мастер</th>
+                <th>Филиал</th>
+                <th>Статус</th>
+                <th class="actions">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Model.Bookings)
+            {
+                <tr>
+                    <td class="mono">@b.BookingId.ToString("0000")</td>
+                    <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
+                    <td>@b.Client.Persona.LastName @b.Client.Persona.FirstName<br/><span class="text-faint mono" style="font-size:.8rem;">@b.Client.Persona.Phone</span></td>
+                    <td>@b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span></td>
+                    <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
+                    <td class="text-muted">@b.Branch.Name</td>
+                    <td><span class="@Badge(b.Status)">@StatusRu(b.Status)</span></td>
+                    <td class="actions">
+                        @if (b.Status == BookingStatus.Created)
+                        {
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Confirmed)" />
+                                <button type="submit" style="background:none;border:0;color:var(--accent);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Подтвердить</button>
+                            </form>
+                        }
+                        @if (b.Status == BookingStatus.Confirmed)
+                        {
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Completed)" />
+                                <button type="submit" style="background:none;border:0;color:var(--success);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Завершить</button>
+                            </form>
+                        }
+                        @if (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed)
+                        {
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Cancelled)" />
+                                <button type="submit" style="background:none;border:0;color:var(--danger);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Отменить</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (Model.Bookings.Count == 0)
+    {
+        <p class="text-muted mt-3">Записей пока нет.</p>
+    }
+</div>

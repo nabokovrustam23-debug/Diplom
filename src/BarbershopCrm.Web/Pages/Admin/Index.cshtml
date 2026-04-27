@@ -1,0 +1,64 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Админка · Сводка";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Панель владельца</div>
+    <h2 class="mt-2 mb-2">Сводка по сети</h2>
+    <p class="text-muted mb-5">Оперативные показатели сети барбершопов «Тихий час».</p>
+
+    <partial name="_AdminNav" />
+
+    <div class="grid grid-cols-3 mb-4">
+        <div class="card">
+            <div class="eyebrow">Записей сегодня</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--accent);line-height:1.1;margin-top:8px;">
+                @Model.BookingsToday
+            </div>
+            <div class="text-muted" style="font-size:.85rem;">всего за неделю — @Model.BookingsThisWeek</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Активных клиентов</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--text);line-height:1.1;margin-top:8px;">
+                @Model.ClientCount
+            </div>
+            <div class="text-muted" style="font-size:.85rem;">всего записей в БД — @Model.BookingCount</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Выручка за неделю</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--text);line-height:1.1;margin-top:8px;">
+                @Model.RevenueThisWeek.ToString("0") <span style="font-size:1.5rem;color:var(--text-faint)">₽</span>
+            </div>
+            <div class="text-muted" style="font-size:.85rem;">по завершённым визитам</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-3">
+        <a class="card-link" asp-page="/Admin/Branches/Index">
+            <div class="card">
+                <div class="eyebrow">Справочник</div>
+                <h4 class="mt-2 mb-1">Филиалы</h4>
+                <p class="text-muted" style="font-size:.9rem;">всего: @Model.BranchCount</p>
+                <span class="btn btn-outline btn-sm">Открыть →</span>
+            </div>
+        </a>
+        <a class="card-link" asp-page="/Admin/Services/Index">
+            <div class="card">
+                <div class="eyebrow">Прайс-лист</div>
+                <h4 class="mt-2 mb-1">Услуги</h4>
+                <p class="text-muted" style="font-size:.9rem;">всего: @Model.ServiceCount</p>
+                <span class="btn btn-outline btn-sm">Открыть →</span>
+            </div>
+        </a>
+        <a class="card-link" asp-page="/Admin/Masters/Index">
+            <div class="card">
+                <div class="eyebrow">Команда</div>
+                <h4 class="mt-2 mb-1">Мастера</h4>
+                <p class="text-muted" style="font-size:.9rem;">активных: @Model.MasterCount</p>
+                <span class="btn btn-outline btn-sm">Открыть →</span>
+            </div>
+        </a>
+    </div>
+</div>

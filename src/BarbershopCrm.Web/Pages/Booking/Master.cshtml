@@ -1,0 +1,57 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.MasterModel
+@{
+    ViewData["Title"] = "Запись · Мастер";
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="3" />
+
+    <div class="eyebrow">Шаг 03</div>
+    <h2 class="mt-2 mb-1">К кому?</h2>
+    @if (Model.Branch is not null && Model.Service is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name
+            <span class="sep">·</span>
+            @Model.Service.DurationMinutes мин
+            <span class="sep">·</span>
+            @Model.Service.Price.ToString("0") ₽
+        </p>
+    }
+
+    <div class="grid grid-cols-3">
+        @foreach (var master in Model.Masters)
+        {
+            <div class="master-card">
+                <div class="position">@master.Position</div>
+                <div class="name">@master.Persona.LastName @master.Persona.FirstName</div>
+                @if (!string.IsNullOrWhiteSpace(master.Bio))
+                {
+                    <div class="bio">@master.Bio</div>
+                }
+                else
+                {
+                    <div class="bio text-faint">Нет описания.</div>
+                }
+                <a class="btn btn-outline"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@master.MasterId">Выбрать →</a>
+            </div>
+        }
+        @if (Model.Masters.Count == 0)
+        {
+            <div class="notice notice-warn" style="grid-column: 1 / -1;">
+                В этом филиале сейчас нет мастеров, оказывающих выбранную услугу.
+            </div>
+        }
+    </div>
+
+    <a class="btn-ghost mt-5"
+       asp-page="Service"
+       asp-route-branchId="@Model.BranchId">← Другая услуга</a>
+</div>
