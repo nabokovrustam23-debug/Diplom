@@ -1,0 +1,76 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Clients.IndexModel
+@{
+    ViewData["Title"] = "Клиенты";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">CRM</div>
+    <h2 class="mt-2 mb-2">Клиенты</h2>
+    <p class="text-muted mb-4">
+        База клиентов сети. Поиск — по ФИО, телефону или e-mail. Отметка «повторный»
+        ставится автоматически, если у клиента ≥ 2 завершённых визитов.
+    </p>
+
+    <partial name="../_AdminNav" />
+
+    <form method="get" class="filter-form mb-3">
+        <div class="filter-row">
+            <div class="field" style="flex:1;">
+                <label>Поиск</label>
+                <input name="Q" value="@Model.Q" placeholder="Иванов, +7999..., mail@@..." />
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Q))
+            {
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <a class="btn btn-ghost btn-sm" asp-page="Index">Сбросить</a>
+                </div>
+            }
+        </div>
+    </form>
+
+    <p class="text-muted mb-2">Найдено: <span class="mono">@Model.Rows.Count</span></p>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Телефон</th>
+                <th>E-mail</th>
+                <th>Источник</th>
+                <th>Первый визит</th>
+                <th>Визитов (всего / завершено)</th>
+                <th>Последний</th>
+                <th class="actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>
+                        @r.FullName
+                        @if (r.IsRepeat)
+                        {
+                            <span class="badge-repeat">повторный</span>
+                        }
+                    </td>
+                    <td class="mono">@r.Phone</td>
+                    <td class="mono text-muted">@(r.Email ?? "—")</td>
+                    <td class="text-muted">@(r.Source ?? "—")</td>
+                    <td class="mono">@(r.FirstVisit?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="mono">@r.TotalVisits / @r.CompletedVisits</td>
+                    <td class="mono text-muted">@(r.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="actions">
+                        <a class="action-link action-link--accent" asp-page="Details" asp-route-id="@r.ClientId">Карточка →</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

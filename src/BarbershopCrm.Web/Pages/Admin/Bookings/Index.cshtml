@@ -142,7 +142,14 @@
                 <tr>
                     <td class="mono">@b.BookingId.ToString("0000")</td>
                     <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
-                    <td>@b.Client.Persona.LastName @b.Client.Persona.FirstName<br/><span class="text-faint mono" style="font-size:.8rem;">@b.Client.Persona.Phone</span></td>
+                    <td>
+                        <a asp-page="/Admin/Clients/Details" asp-route-id="@b.ClientId" style="color:inherit;">@b.Client.Persona.LastName @b.Client.Persona.FirstName</a>
+                        @if (Model.RepeatClients.TryGetValue(b.ClientId, out var rep) && rep)
+                        {
+                            <span class="badge-repeat" style="margin-left:4px;">повторный</span>
+                        }
+                        <br/><span class="text-faint mono" style="font-size:.8rem;">@b.Client.Persona.Phone</span>
+                    </td>
                     <td>
                         @b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span>
                         @if (!string.IsNullOrEmpty(b.Wishes))

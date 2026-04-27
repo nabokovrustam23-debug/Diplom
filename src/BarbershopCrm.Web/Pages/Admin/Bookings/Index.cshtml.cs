@@ -17,6 +17,13 @@ public class IndexModel : PageModel
     public IList<Branch> Branches { get; private set; } = new List<Branch>();
     public IList<Master> Masters { get; private set; } = new List<Master>();
 
+    /// <summary>
+    /// ClientId → признак «повторный» (≥ 2 завершённых визита за всё время).
+    /// Считается один раз и используется в шаблоне для показа значка «повторный».
+    /// </summary>
+    public IReadOnlyDictionary<int, bool> RepeatClients { get; private set; }
+        = new Dictionary<int, bool>();
+
     [BindProperty(SupportsGet = true)] public string? StatusFilter { get; set; }
     [BindProperty(SupportsGet = true)] public string? DateFilter { get; set; }
     [BindProperty(SupportsGet = true)] public DateOnly? FromDate { get; set; }
@@ -87,6 +94,15 @@ public class IndexModel : PageModel
             .OrderByDescending(b => b.StartDateTime)
             .Take(200)
             .ToListAsync();
+
+        var clientIds = Bookings.Select(b => b.ClientId).Distinct().ToList();
+        var completedCounts = await _db.Bookings
+            .AsNoTracking()
+            .Where(b => clientIds.Contains(b.ClientId) && b.Status == BookingStatus.Completed)
+            .GroupBy(b => b.ClientId)
+            .Select(g => new { ClientId = g.Key, Count = g.Count() })
+            .ToListAsync();
+        RepeatClients = completedCounts.ToDictionary(x => x.ClientId, x => x.Count >= 2);
     }
 
     public async Task<IActionResult> OnPostStatusAsync(int id, BookingStatus status)
