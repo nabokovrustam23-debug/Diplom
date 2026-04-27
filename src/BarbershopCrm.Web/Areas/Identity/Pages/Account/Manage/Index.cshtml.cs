@@ -30,6 +30,8 @@ public class IndexModel : PageModel
     public string Initials { get; set; } = "Т";
     public string RoleLabel { get; set; } = string.Empty;
     public int BookingsCount { get; set; }
+    public IList<Domain.Entities.Booking> UpcomingBookings { get; set; } = new List<Domain.Entities.Booking>();
+    public IList<Domain.Entities.Booking> PastBookings { get; set; } = new List<Domain.Entities.Booking>();
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -159,12 +161,62 @@ public class IndexModel : PageModel
             _ => string.Empty
         };
 
-        // Кол-во записей клиента (если он клиент).
+        // Записи клиента: будущие — для отображения и кнопки «Отменить»,
+        // прошлые — отдельным списком как история визитов.
         if (persona is not null)
         {
-            BookingsCount = await _db.Bookings
+            var allBookings = await _db.Bookings
+                .Include(b => b.Branch)
+                .Include(b => b.Service)
+                .Include(b => b.Master).ThenInclude(m => m.Persona)
                 .Where(b => b.Client.PersonaId == persona.PersonaId)
-                .CountAsync();
+                .AsNoTracking()
+                .OrderByDescending(b => b.StartDateTime)
+                .ToListAsync();
+
+            BookingsCount = allBookings.Count;
+            var now = DateTime.UtcNow;
+            UpcomingBookings = allBookings
+                .Where(b => b.StartDateTime >= now)
+                .OrderBy(b => b.StartDateTime)
+                .ToList();
+            PastBookings = allBookings
+                .Where(b => b.StartDateTime < now)
+                .Take(20)
+                .ToList();
         }
+    }
+
+    public async Task<IActionResult> OnPostCancelBookingAsync(int bookingId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return NotFound();
+
+        var booking = await _db.Bookings
+            .Include(b => b.Client)
+            .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+        // Отменять можно только свою будущую запись и только если она ещё активна.
+        if (booking is null || booking.Client.PersonaId != user.PersonaId)
+        {
+            return Forbid();
+        }
+        if (booking.StartDateTime < DateTime.UtcNow)
+        {
+            StatusMessage = "Прошедшую запись отменить нельзя.";
+            return RedirectToPage();
+        }
+        if (booking.Status is Domain.Enums.BookingStatus.Cancelled
+            or Domain.Enums.BookingStatus.Completed
+            or Domain.Enums.BookingStatus.NoShow)
+        {
+            StatusMessage = "Эта запись уже закрыта.";
+            return RedirectToPage();
+        }
+
+        booking.Status = Domain.Enums.BookingStatus.Cancelled;
+        await _db.SaveChangesAsync();
+        StatusMessage = $"Запись № {booking.BookingId:0000} отменена.";
+        return RedirectToPage();
     }
 }

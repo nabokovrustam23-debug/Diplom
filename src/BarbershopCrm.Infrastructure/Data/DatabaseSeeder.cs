@@ -67,6 +67,7 @@ public static class DatabaseSeeder
 
     private static List<Service> SeedServices(ApplicationDbContext db)
     {
+        // DisplayOrder задаёт порядок вывода в каталоге: сверху самые ходовые позиции.
         var services = new List<Service>
         {
             new()
@@ -74,42 +75,48 @@ public static class DatabaseSeeder
                 Name = "Мужская стрижка",
                 Description = "Стрижка ножницами и машинкой, мытьё головы, укладка.",
                 DurationMinutes = 60,
-                Price = 1500m
+                Price = 1500m,
+                DisplayOrder = 10
             },
             new()
             {
                 Name = "Стрижка машинкой",
                 Description = "Стрижка одной длиной по всей голове.",
                 DurationMinutes = 30,
-                Price = 800m
+                Price = 800m,
+                DisplayOrder = 20
             },
             new()
             {
                 Name = "Моделирование бороды",
                 Description = "Стрижка и моделирование бороды опасной бритвой.",
                 DurationMinutes = 45,
-                Price = 1200m
-            },
-            new()
-            {
-                Name = "Камуфляж бороды",
-                Description = "Тонирование бороды для маскировки седины.",
-                DurationMinutes = 45,
-                Price = 1500m
+                Price = 1200m,
+                DisplayOrder = 30
             },
             new()
             {
                 Name = "Королевское бритьё",
                 Description = "Бритьё опасной бритвой с горячими полотенцами.",
                 DurationMinutes = 60,
-                Price = 1800m
+                Price = 1800m,
+                DisplayOrder = 40
+            },
+            new()
+            {
+                Name = "Камуфляж бороды",
+                Description = "Тонирование бороды для маскировки седины.",
+                DurationMinutes = 45,
+                Price = 1500m,
+                DisplayOrder = 50
             },
             new()
             {
                 Name = "Детская стрижка",
                 Description = "Стрижка для клиентов до 12 лет.",
                 DurationMinutes = 45,
-                Price = 1000m
+                Price = 1000m,
+                DisplayOrder = 60
             }
         };
 
@@ -146,17 +153,19 @@ public static class DatabaseSeeder
 
     private static void SeedMasterBranches(ApplicationDbContext db, List<Master> masters, List<Branch> branches)
     {
-        // Соколов → Центр + Юбилейный
+        // Каждый мастер закреплён ровно за одним филиалом сети — так его
+        // расписание и записи однозначно относятся к одному адресу.
+        // Соколов → Центр
         // Ковалёв → Центр
         // Лазарев → Юбилейный
-        // Романов → Сочи + Центр
+        // Романов → Сочи
         // Орлов   → Сочи
         var links = new (int MasterIndex, int BranchIndex)[]
         {
-            (0, 0), (0, 1),
+            (0, 0),
             (1, 0),
             (2, 1),
-            (3, 2), (3, 0),
+            (3, 2),
             (4, 2)
         };
 

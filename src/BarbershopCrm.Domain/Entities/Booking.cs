@@ -13,6 +13,8 @@ public class Booking
     public int DurationMinutes { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Created;
     public DateTime CreatedAt { get; set; }
+    public string? Notes { get; set; }
+    public string? Wishes { get; set; }
 
     public Client Client { get; set; } = null!;
     public Master Master { get; set; } = null!;

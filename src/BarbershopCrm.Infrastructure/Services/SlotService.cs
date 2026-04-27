@@ -130,4 +130,58 @@ public class SlotService : ISlotService
         }
         return false;
     }
+
+    public async Task<IReadOnlyList<(TimeOnly Time, int MasterId)>> GetAvailableSlotsForAnyMasterAsync(
+        int branchId,
+        int serviceId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        // Берём всех мастеров филиала, которые умеют выполнять услугу.
+        var masterIds = await _db.MasterBranches
+            .AsNoTracking()
+            .Where(mb => mb.BranchId == branchId
+                && _db.MasterServices.Any(ms => ms.MasterId == mb.MasterId && ms.ServiceId == serviceId))
+            .Where(mb => mb.Master.IsActive)
+            .Select(mb => mb.MasterId)
+            .ToListAsync(cancellationToken);
+
+        var dict = new Dictionary<TimeOnly, int>();
+        foreach (var masterId in masterIds.OrderBy(id => id))
+        {
+            var slots = await GetAvailableSlotsAsync(masterId, branchId, serviceId, date, cancellationToken);
+            foreach (var t in slots)
+            {
+                if (!dict.ContainsKey(t))
+                {
+                    dict[t] = masterId;
+                }
+            }
+        }
+
+        return dict
+            .OrderBy(kv => kv.Key)
+            .Select(kv => (kv.Key, kv.Value))
+            .ToList();
+    }
+
+    public async Task<(DateOnly Date, TimeOnly Time)?> GetNextAvailableSlotAsync(
+        int masterId,
+        int branchId,
+        int serviceId,
+        int horizonDays,
+        CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        for (var i = 0; i < horizonDays; i++)
+        {
+            var date = today.AddDays(i);
+            var slots = await GetAvailableSlotsAsync(masterId, branchId, serviceId, date, cancellationToken);
+            if (slots.Count > 0)
+            {
+                return (date, slots[0]);
+            }
+        }
+        return null;
+    }
 }

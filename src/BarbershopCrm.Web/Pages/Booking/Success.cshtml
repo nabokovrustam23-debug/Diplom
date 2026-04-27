@@ -33,8 +33,31 @@
 
             <dt>Дата и время</dt>
             <dd class="mono">@Model.Booking.StartDateTime.ToString("dd.MM.yyyy · HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))</dd>
+
+            @if (!string.IsNullOrEmpty(Model.Booking.Wishes))
+            {
+                <dt>Пожелания</dt>
+                <dd>
+                    @foreach (var w in Model.Booking.Wishes.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <span class="wish-tag">@w</span>
+                    }
+                </dd>
+            }
+            @if (!string.IsNullOrEmpty(Model.Booking.Notes))
+            {
+                <dt>Комментарий</dt>
+                <dd>@Model.Booking.Notes</dd>
+            }
         </dl>
 
-        <a class="btn btn-outline mt-3" asp-page="/Index">← На главную</a>
+        <div class="flex gap-2 mt-3 no-print">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Manage/Index">Перейти в кабинет</a>
+            }
+            <a class="btn btn-outline" asp-page="/Index">← На главную</a>
+            <button type="button" class="btn btn-outline" onclick="window.print()">Распечатать</button>
+        </div>
     }
 </div>

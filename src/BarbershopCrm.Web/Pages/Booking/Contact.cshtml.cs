@@ -2,7 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Infrastructure.Identity;
 using BarbershopCrm.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +15,30 @@ public class ContactModel : PageModel
 {
     private readonly ApplicationDbContext _db;
     private readonly ISlotService _slots;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ContactModel(ApplicationDbContext db, ISlotService slots)
+    public ContactModel(ApplicationDbContext db, ISlotService slots, UserManager<ApplicationUser> userManager)
     {
         _db = db;
         _slots = slots;
+        _userManager = userManager;
     }
+
+    /// <summary>
+    /// Готовые пожелания, доступные клиенту чекбоксами на форме записи. Выбранные пункты
+    /// сохраняются в Booking.Wishes как «;»-разделённый список (ровно те же ключи).
+    /// </summary>
+    public static readonly IReadOnlyList<string> WishOptions = new[]
+    {
+        "Беру с собой ребёнка",
+        "Прошу не разговаривать",
+        "Кофе/чай во время визита",
+        "Нужна машинка №1",
+        "Нужна машинка №2",
+        "Сделать фото для соцсетей",
+        "Парфюм после стрижки",
+        "Доплачу безналично"
+    };
 
     [BindProperty(SupportsGet = true)]
     public int BranchId { get; set; }
@@ -57,6 +77,11 @@ public class ContactModel : PageModel
         [EmailAddress(ErrorMessage = "Неверный формат e-mail.")]
         [StringLength(256)]
         public string? Email { get; set; }
+
+        [StringLength(500)]
+        public string? Notes { get; set; }
+
+        public List<string> Wishes { get; set; } = new();
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -64,6 +89,24 @@ public class ContactModel : PageModel
         if (!await LoadContextAsync())
         {
             return RedirectToPage("Index");
+        }
+
+        // Если пользователь залогинен — подставим его контактные данные из Persona.
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is not null)
+            {
+                var persona = await _db.Personas.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.PersonaId == user.PersonaId);
+                if (persona is not null)
+                {
+                    Input.LastName = persona.LastName;
+                    Input.FirstName = persona.FirstName;
+                    Input.Phone = persona.Phone;
+                    Input.Email = persona.Email ?? user.Email;
+                }
+            }
         }
 
         return Page();
@@ -93,6 +136,8 @@ public class ContactModel : PageModel
         }
 
         // Поиск/создание Persona по нормализованному телефону.
+        // Если по этому телефону уже есть пользователь сети — используем его Persona,
+        // чтобы запись попала в личный кабинет.
         var phone = NormalizePhone(Input.Phone);
         var persona = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
         if (persona is null)
@@ -123,6 +168,13 @@ public class ContactModel : PageModel
             await _db.SaveChangesAsync();
         }
 
+        // Сохраняем выбранные пожелания только из официального списка (защита от подделки).
+        var allowedWishes = Input.Wishes
+            .Where(w => WishOptions.Contains(w))
+            .Distinct()
+            .ToList();
+        var wishes = allowedWishes.Count > 0 ? string.Join(";", allowedWishes) : null;
+
         var booking = new Domain.Entities.Booking
         {
             ClientId = client.ClientId,
@@ -132,7 +184,9 @@ public class ContactModel : PageModel
             StartDateTime = Start,
             DurationMinutes = Service!.DurationMinutes,
             Status = BookingStatus.Created,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Notes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+            Wishes = wishes
         };
         _db.Bookings.Add(booking);
         await _db.SaveChangesAsync();

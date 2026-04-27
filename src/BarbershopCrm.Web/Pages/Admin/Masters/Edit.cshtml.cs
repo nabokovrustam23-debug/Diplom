@@ -40,7 +40,7 @@ public class EditModel : PageModel
             HireDate = m.HireDate,
             Bio = m.Bio,
             IsActive = m.IsActive,
-            BranchIds = m.MasterBranches.Select(mb => mb.BranchId).ToList(),
+            BranchId = m.MasterBranches.Select(mb => mb.BranchId).FirstOrDefault(),
             ServiceIds = m.MasterServices.Select(ms => ms.ServiceId).ToList()
         };
         await LoadOptionsAsync();
@@ -72,15 +72,11 @@ public class EditModel : PageModel
         m.Bio = string.IsNullOrWhiteSpace(Input.Bio) ? null : Input.Bio.Trim();
         m.IsActive = Input.IsActive;
 
-        var newBranches = Input.BranchIds.Distinct().ToHashSet();
-        var oldBranches = m.MasterBranches.Select(mb => mb.BranchId).ToHashSet();
-        foreach (var add in newBranches.Except(oldBranches))
-            _db.MasterBranches.Add(new MasterBranch { MasterId = id, BranchId = add });
-        foreach (var rm in oldBranches.Except(newBranches))
-        {
-            var ent = m.MasterBranches.First(mb => mb.BranchId == rm);
-            _db.MasterBranches.Remove(ent);
-        }
+        // Привязка «мастер — один филиал»: удаляем все старые связи и добавляем одну.
+        foreach (var existing in m.MasterBranches.ToList())
+            _db.MasterBranches.Remove(existing);
+        if (Input.BranchId > 0)
+            _db.MasterBranches.Add(new MasterBranch { MasterId = id, BranchId = Input.BranchId });
 
         var newServices = Input.ServiceIds.Distinct().ToHashSet();
         var oldServices = m.MasterServices.Select(ms => ms.ServiceId).ToHashSet();

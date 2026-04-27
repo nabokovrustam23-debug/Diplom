@@ -37,7 +37,7 @@ public class ServiceModel : PageModel
                 ms.ServiceId == s.ServiceId
                 && _db.MasterBranches.Any(mb =>
                     mb.MasterId == ms.MasterId && mb.BranchId == BranchId))
-            orderby s.Name
+            orderby s.DisplayOrder, s.Name
             select s
         ).AsNoTracking().ToListAsync();
 

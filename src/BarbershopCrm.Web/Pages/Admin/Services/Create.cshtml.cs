@@ -25,6 +25,10 @@ public class CreateModel : PageModel
 
         [Range(0, 1_000_000)]
         public decimal Price { get; set; } = 1000;
+
+        [Range(0, 9999)]
+        [Display(Name = "Порядок вывода")]
+        public int DisplayOrder { get; set; }
     }
 
     public IActionResult OnGet() => Page();
@@ -44,7 +48,8 @@ public class CreateModel : PageModel
             Name = Input.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim(),
             DurationMinutes = Input.DurationMinutes,
-            Price = Input.Price
+            Price = Input.Price,
+            DisplayOrder = Input.DisplayOrder
         });
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");

@@ -2,6 +2,25 @@
 @model BarbershopCrm.Web.Pages.Booking.MasterModel
 @{
     ViewData["Title"] = "Запись · Мастер";
+
+    string FormatNext((DateOnly Date, TimeOnly Time)? slot)
+    {
+        if (slot is null) return "Свободных окон нет в горизонте 14 дней";
+        var d = slot.Value.Date;
+        var t = slot.Value.Time;
+        return $"Ближайшее окно: {d:dd.MM} {GetWeekday(d)} в {t:HH:mm}";
+    }
+
+    string GetWeekday(DateOnly d) => d.DayOfWeek switch
+    {
+        DayOfWeek.Monday => "пн",
+        DayOfWeek.Tuesday => "вт",
+        DayOfWeek.Wednesday => "ср",
+        DayOfWeek.Thursday => "чт",
+        DayOfWeek.Friday => "пт",
+        DayOfWeek.Saturday => "сб",
+        _ => "вс"
+    };
 }
 
 <div class="container mt-5">
@@ -22,25 +41,49 @@
         </p>
     }
 
+    @if (Model.Masters.Count > 1)
+    {
+        <div class="master-card master-card--any">
+            <div class="position">Без предпочтений</div>
+            <div class="name">Любой мастер</div>
+            <div class="bio">Подберём первого свободного мастера на ближайший слот.</div>
+            <div class="next-slot">@FormatNext(Model.AnyMasterNextSlot)</div>
+            <a class="btn btn-primary"
+               asp-page="Slot"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="0">Выбрать →</a>
+        </div>
+    }
+
     <div class="grid grid-cols-3">
-        @foreach (var master in Model.Masters)
+        @foreach (var card in Model.Masters)
         {
-            <div class="master-card">
-                <div class="position">@master.Position</div>
-                <div class="name">@master.Persona.LastName @master.Persona.FirstName</div>
-                @if (!string.IsNullOrWhiteSpace(master.Bio))
+            var isBusy = card.NextSlot is null;
+            <div class="master-card @(isBusy ? "master-card--busy" : null)">
+                <div class="position">@card.Master.Position</div>
+                <div class="name">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
+                @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
                 {
-                    <div class="bio">@master.Bio</div>
+                    <div class="bio">@card.Master.Bio</div>
                 }
                 else
                 {
                     <div class="bio text-faint">Нет описания.</div>
                 }
-                <a class="btn btn-outline"
-                   asp-page="Slot"
-                   asp-route-branchId="@Model.BranchId"
-                   asp-route-serviceId="@Model.ServiceId"
-                   asp-route-masterId="@master.MasterId">Выбрать →</a>
+                <div class="next-slot @(isBusy ? "next-slot--busy" : null)">@FormatNext(card.NextSlot)</div>
+                @if (isBusy)
+                {
+                    <button class="btn btn-outline" disabled>Нет окон</button>
+                }
+                else
+                {
+                    <a class="btn btn-outline"
+                       asp-page="Slot"
+                       asp-route-branchId="@Model.BranchId"
+                       asp-route-serviceId="@Model.ServiceId"
+                       asp-route-masterId="@card.Master.MasterId">Выбрать →</a>
+                }
             </div>
         }
         @if (Model.Masters.Count == 0)

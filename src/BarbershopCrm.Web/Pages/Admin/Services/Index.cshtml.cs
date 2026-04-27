@@ -14,6 +14,9 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Services = await _db.Services.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+        Services = await _db.Services.AsNoTracking()
+            .OrderBy(s => s.DisplayOrder)
+            .ThenBy(s => s.Name)
+            .ToListAsync();
     }
 }

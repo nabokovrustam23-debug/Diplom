@@ -998,3 +998,103 @@ select {
 }
 
 body { min-height: 100vh; }
+
+/* ===== Улучшения функциональности (PR #15) ===== */
+
+/* Карточки мастеров: подсказка ближайшего слота */
+.master-card .next-slot {
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.master-card .next-slot--busy { color: var(--muted); font-weight: 400; }
+.master-card--busy { opacity: 0.6; }
+.master-card--any {
+  border: 2px dashed var(--accent);
+  background: var(--paper);
+  margin-bottom: 1rem;
+}
+
+/* Группировка слотов по времени дня */
+.slot-group { margin-bottom: 1.25rem; }
+.slot-group-title {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+/* Чекбоксы пожеланий */
+.wishes-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.wish-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--paper); font-family: var(--sans); font-size: 0.9rem;
+  cursor: pointer; user-select: none;
+  transition: border-color .15s, background .15s;
+}
+.wish-chip:hover { border-color: var(--accent); }
+.wish-chip input[type="checkbox"] { margin: 0; cursor: pointer; }
+.wish-chip input[type="checkbox"]:checked + span { color: var(--accent); font-weight: 600; }
+.wish-chip:has(input:checked) { background: var(--paper-2); border-color: var(--accent); }
+
+/* Тег пожелания на странице успеха */
+.wish-tag {
+  display: inline-block; margin: 2px 6px 2px 0; padding: 3px 10px;
+  background: var(--paper-2); border: 1px solid var(--border); border-radius: 999px;
+  font-family: var(--sans); font-size: 0.85rem;
+}
+
+/* Печать: скрыть кнопки */
+@media print {
+  .no-print, .navbar, .footer, .barber-pole-stripe { display: none !important; }
+  body { background: white !important; }
+}
+
+/* Фильтры в админке */
+.filter-form {
+  background: var(--paper); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.filter-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px 14px; align-items: end;
+}
+.filter-row .field { margin-bottom: 0; }
+.filter-row .field--grow { grid-column: span 2; }
+.filter-row .field label {
+  font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; display: block;
+}
+.filter-actions {
+  display: flex; gap: 8px; align-items: end;
+}
+.btn-outline.is-active {
+  background: var(--accent); color: white; border-color: var(--accent);
+}
+.btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+.flex-wrap { flex-wrap: wrap; }
+
+/* Action-link — кнопки управления статусом в админке */
+.action-link {
+  background: none; border: 0; cursor: pointer;
+  font-family: var(--sans); font-size: 0.9rem; padding: 0; margin: 0 8px 0 0;
+}
+.action-link--accent { color: var(--accent); }
+.action-link--success { color: var(--success); }
+.action-link--danger { color: var(--danger); }
+.action-link--muted { color: var(--muted); }
+.action-link:hover { text-decoration: underline; }
+
+/* Поле textarea — синхронизировать стиль с input */
+.field textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-family: var(--sans); font-size: 0.95rem;
+  resize: vertical; min-height: 60px;
+}
