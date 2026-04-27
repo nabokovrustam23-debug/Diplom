@@ -1,4 +1,6 @@
 @page
+@using BarbershopCrm.Domain.Enums
+@using BarbershopCrm.Web.Shared
 @model BarbershopCrm.Web.Pages.Admin.Services.IndexModel
 @{
     ViewData["Title"] = "Админка · Услуги";
@@ -7,34 +9,63 @@
 <div class="container mt-5">
     <div class="eyebrow">Прайс-лист</div>
     <h2 class="mt-2 mb-2">Услуги</h2>
-    <p class="text-muted mb-5">Единые позиции каталога — действуют во всех филиалах сети.</p>
+    <p class="text-muted mb-5">Единые позиции каталога — действуют во всех филиалах сети. Отключённые позиции не предлагаются клиентам, но сохраняются в истории записей.</p>
 
     <partial name="../_AdminNav" />
 
     <div class="flex-between mb-3">
-        <span class="text-muted">Всего: @Model.Services.Count</span>
+        <span class="text-muted">Всего: @Model.Services.Count · активных: @Model.Services.Count(s => s.IsActive)</span>
         <a class="btn btn-primary btn-sm" asp-page="Create">+ Новая услуга</a>
     </div>
 
     <table class="data-table">
         <thead>
             <tr>
+                <th style="width: 80px;">Порядок</th>
                 <th>Название</th>
+                <th>Категория</th>
                 <th>Описание</th>
                 <th>Длительность</th>
                 <th>Цена</th>
+                <th>Статус</th>
                 <th class="actions">Действия</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var s in Model.Services)
+            @for (var i = 0; i < Model.Services.Count; i++)
             {
-                <tr>
+                var s = Model.Services[i];
+                <tr class="@(s.IsActive ? "" : "row-muted")">
+                    <td class="mono">
+                        @s.DisplayOrder
+                        <div style="display:inline-flex;gap:2px;margin-left:6px;">
+                            <form method="post" asp-page-handler="MoveUp" asp-route-id="@s.ServiceId" style="display:inline;">
+                                <button type="submit" class="action-link action-link--muted" title="Выше" @(i == 0 ? "disabled" : "")>▲</button>
+                            </form>
+                            <form method="post" asp-page-handler="MoveDown" asp-route-id="@s.ServiceId" style="display:inline;">
+                                <button type="submit" class="action-link action-link--muted" title="Ниже" @(i == Model.Services.Count - 1 ? "disabled" : "")>▼</button>
+                            </form>
+                        </div>
+                    </td>
                     <td>@s.Name</td>
+                    <td>@ServiceCategoryLabels.Label(s.Category)</td>
                     <td class="text-muted">@s.Description</td>
                     <td class="mono">@s.DurationMinutes мин</td>
                     <td class="mono text-accent">@s.Price.ToString("0") ₽</td>
+                    <td>
+                        @if (s.IsActive)
+                        {
+                            <span class="action-link--success" style="font-size:0.85rem;">Активна</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted" style="font-size:0.85rem;">Отключена</span>
+                        }
+                    </td>
                     <td class="actions">
+                        <form method="post" asp-page-handler="ToggleActive" asp-route-id="@s.ServiceId" style="display:inline;">
+                            <button type="submit" class="action-link action-link--accent">@(s.IsActive ? "Отключить" : "Включить")</button>
+                        </form>
                         <a asp-page="Edit" asp-route-id="@s.ServiceId">Изменить</a>
                         <a asp-page="Delete" asp-route-id="@s.ServiceId" style="color:var(--danger);">Удалить</a>
                     </td>
@@ -43,3 +74,8 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    .data-table tr.row-muted td { opacity: 0.55; }
+    .data-table tr.row-muted td:first-child, .data-table tr.row-muted td:last-child { opacity: 1; }
+</style>

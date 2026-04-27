@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
+using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -29,6 +30,12 @@ public class CreateModel : PageModel
         [Range(0, 9999)]
         [Display(Name = "Порядок вывода")]
         public int DisplayOrder { get; set; }
+
+        [Display(Name = "Категория")]
+        public ServiceCategory Category { get; set; } = ServiceCategory.Haircut;
+
+        [Display(Name = "Активна")]
+        public bool IsActive { get; set; } = true;
     }
 
     public IActionResult OnGet() => Page();
@@ -49,7 +56,9 @@ public class CreateModel : PageModel
             Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim(),
             DurationMinutes = Input.DurationMinutes,
             Price = Input.Price,
-            DisplayOrder = Input.DisplayOrder
+            DisplayOrder = Input.DisplayOrder,
+            Category = Input.Category,
+            IsActive = Input.IsActive
         });
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");

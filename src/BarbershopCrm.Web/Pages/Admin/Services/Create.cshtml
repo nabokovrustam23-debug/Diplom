@@ -1,4 +1,6 @@
 @page
+@using BarbershopCrm.Domain.Enums
+@using BarbershopCrm.Web.Shared
 @model BarbershopCrm.Web.Pages.Admin.Services.CreateModel
 @{
     ViewData["Title"] = "Новая услуга";
@@ -34,11 +36,29 @@
                 <span asp-validation-for="Input.Price" class="text-danger"></span>
             </div>
         </div>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.Category">Категория</label>
+                <select asp-for="Input.Category" class="form-select">
+                    @foreach (var c in ServiceCategoryLabels.Order)
+                    {
+                        <option value="@c">@ServiceCategoryLabels.Label(c)</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.Category" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.DisplayOrder">Порядок вывода</label>
+                <input asp-for="Input.DisplayOrder" type="number" min="0" max="9999" step="10" />
+                <span class="text-faint" style="font-size:.85rem;">Чем меньше число, тем выше услуга в списке.</span>
+                <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+            </div>
+        </div>
         <div class="field">
-            <label asp-for="Input.DisplayOrder">Порядок вывода</label>
-            <input asp-for="Input.DisplayOrder" type="number" min="0" max="9999" step="10" />
-            <span class="text-faint" style="font-size:.85rem;">Чем меньше число, тем выше услуга в списке. Шаг 10.</span>
-            <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+            <label style="display:flex;align-items:center;gap:8px;">
+                <input asp-for="Input.IsActive" type="checkbox" />
+                <span>Активна — услуга предлагается клиентам к записи</span>
+            </label>
         </div>
 
         <div class="flex gap-2 mt-3">

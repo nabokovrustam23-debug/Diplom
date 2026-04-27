@@ -23,7 +23,9 @@ public class EditModel : PageModel
             Description = s.Description,
             DurationMinutes = s.DurationMinutes,
             Price = s.Price,
-            DisplayOrder = s.DisplayOrder
+            DisplayOrder = s.DisplayOrder,
+            Category = s.Category,
+            IsActive = s.IsActive
         };
         return Page();
     }
@@ -44,6 +46,8 @@ public class EditModel : PageModel
         s.DurationMinutes = Input.DurationMinutes;
         s.Price = Input.Price;
         s.DisplayOrder = Input.DisplayOrder;
+        s.Category = Input.Category;
+        s.IsActive = Input.IsActive;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

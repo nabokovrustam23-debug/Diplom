@@ -1,0 +1,91 @@
+@page "{id:int}"
+@using BarbershopCrm.Domain.Enums
+@using BarbershopCrm.Web.Shared
+@model BarbershopCrm.Web.Pages.Branches.DetailsModel
+@{
+    if (Model.Branch is null)
+    {
+        Response.Redirect(Url.Page("/Booking/Index")!);
+        return;
+    }
+    ViewData["Title"] = $"Филиал · {Model.Branch.Name}";
+}
+
+<div class="container mt-5">
+    <a class="btn-ghost mb-3" asp-page="/Index">← Главная</a>
+
+    <div class="branch-hero">
+        <div class="eyebrow">Филиал сети</div>
+        <h2>@Model.Branch.Name</h2>
+        <div class="meta">@Model.Branch.Address</div>
+        @if (!string.IsNullOrWhiteSpace(Model.Branch.Phone))
+        {
+            <div class="meta">Телефон: @Model.Branch.Phone</div>
+        }
+        <div class="meta">Часы работы: @Model.Branch.OpeningTime.ToString("HH:mm")–@Model.Branch.ClosingTime.ToString("HH:mm")</div>
+        @if (Model.BranchNextSlot is not null)
+        {
+            <div class="meta mt-2" style="color:var(--accent);">
+                Ближайшее окно: @Model.BranchNextSlot.Value.Date.ToString("dd.MM") в @Model.BranchNextSlot.Value.Time.ToString("HH:mm")
+            </div>
+        }
+        <a class="btn btn-primary mt-3" asp-page="/Booking/Service" asp-route-branchId="@Model.Branch.BranchId">Записаться в этот филиал →</a>
+    </div>
+
+    <div class="branch-grid">
+        <div class="branch-panel">
+            <h3>Мастера филиала</h3>
+            @if (Model.Masters.Count == 0)
+            {
+                <p class="text-muted">В этом филиале ещё нет мастеров, принимающих онлайн-записи.</p>
+            }
+            else
+            {
+                @foreach (var card in Model.Masters)
+                {
+                    <div class="branch-master-row">
+                        <div>
+                            <div class="title">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
+                            <div class="position">@card.Master.Position</div>
+                            @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
+                            {
+                                <div class="meta mt-1" style="font-size:0.88rem;color:var(--muted);">@card.Master.Bio</div>
+                            }
+                        </div>
+                        @if (card.NextSlot is not null)
+                        {
+                            <div class="next-slot">@card.NextSlot.Value.Date.ToString("dd.MM") · @card.NextSlot.Value.Time.ToString("HH:mm")</div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="branch-panel">
+            <h3>Прайс-лист филиала</h3>
+            @if (Model.Services.Count == 0)
+            {
+                <p class="text-muted">Прайс-лист этого филиала временно пуст.</p>
+            }
+            else
+            {
+                @foreach (var s in Model.Services)
+                {
+                    <div class="branch-service-line">
+                        <div>
+                            <div class="name">@s.Name</div>
+                            <div class="meta">
+                                @s.DurationMinutes мин
+                                @if (s.Category != ServiceCategory.Other)
+                                {
+                                    <span class="sep">·</span> <span>@ServiceCategoryLabels.Label(s.Category)</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="price mono">@s.Price.ToString("0") ₽</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

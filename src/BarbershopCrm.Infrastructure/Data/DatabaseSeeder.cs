@@ -76,7 +76,8 @@ public static class DatabaseSeeder
                 Description = "Стрижка ножницами и машинкой, мытьё головы, укладка.",
                 DurationMinutes = 60,
                 Price = 1500m,
-                DisplayOrder = 10
+                DisplayOrder = 10,
+                Category = ServiceCategory.Haircut
             },
             new()
             {
@@ -84,7 +85,8 @@ public static class DatabaseSeeder
                 Description = "Стрижка одной длиной по всей голове.",
                 DurationMinutes = 30,
                 Price = 800m,
-                DisplayOrder = 20
+                DisplayOrder = 20,
+                Category = ServiceCategory.Haircut
             },
             new()
             {
@@ -92,7 +94,8 @@ public static class DatabaseSeeder
                 Description = "Стрижка и моделирование бороды опасной бритвой.",
                 DurationMinutes = 45,
                 Price = 1200m,
-                DisplayOrder = 30
+                DisplayOrder = 30,
+                Category = ServiceCategory.Beard
             },
             new()
             {
@@ -100,7 +103,8 @@ public static class DatabaseSeeder
                 Description = "Бритьё опасной бритвой с горячими полотенцами.",
                 DurationMinutes = 60,
                 Price = 1800m,
-                DisplayOrder = 40
+                DisplayOrder = 40,
+                Category = ServiceCategory.Shave
             },
             new()
             {
@@ -108,7 +112,8 @@ public static class DatabaseSeeder
                 Description = "Тонирование бороды для маскировки седины.",
                 DurationMinutes = 45,
                 Price = 1500m,
-                DisplayOrder = 50
+                DisplayOrder = 50,
+                Category = ServiceCategory.Coloring
             },
             new()
             {
@@ -116,7 +121,8 @@ public static class DatabaseSeeder
                 Description = "Стрижка для клиентов до 12 лет.",
                 DurationMinutes = 45,
                 Price = 1000m,
-                DisplayOrder = 60
+                DisplayOrder = 60,
+                Category = ServiceCategory.Kids
             }
         };
 

@@ -87,6 +87,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.Property(x => x.Description).HasMaxLength(1000);
             e.Property(x => x.Price).HasColumnType("decimal(10, 2)");
             e.Property(x => x.DisplayOrder).HasDefaultValue(0);
+            e.Property(x => x.Category).HasConversion<int>().HasDefaultValue(ServiceCategory.Other);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
         });
     }
 

@@ -1,7 +1,11 @@
 @page
+@using BarbershopCrm.Domain.Enums
+@using BarbershopCrm.Web.Shared
 @model BarbershopCrm.Web.Pages.Booking.ServiceModel
 @{
     ViewData["Title"] = "Запись · Услуга";
+    string ActiveCat(ServiceCategory? c) => Model.Category == c ? "is-active" : "";
+    string ActiveDur(string? v) => Model.DurationFilter == v ? "is-active" : "";
 }
 
 <div class="container mt-5">
@@ -14,7 +18,35 @@
         <p class="context-line">@Model.Branch.Name <span class="sep">·</span> @Model.Branch.Address</p>
     }
 
+    @if (Model.AvailableCategories.Count > 1 || Model.Services.Count > 3)
+    {
+        <div class="public-filter-bar mt-4 mb-4">
+            <div class="public-filter-row">
+                <span class="public-filter-label">Категория:</span>
+                <a class="chip @ActiveCat(null)" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-durationFilter="@Model.DurationFilter">Все</a>
+                @foreach (var c in ServiceCategoryLabels.Order)
+                {
+                    if (Model.AvailableCategories.Contains(c))
+                    {
+                        <a class="chip @ActiveCat(c)" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-category="@c" asp-route-durationFilter="@Model.DurationFilter">@ServiceCategoryLabels.Label(c)</a>
+                    }
+                }
+            </div>
+            <div class="public-filter-row">
+                <span class="public-filter-label">Длительность:</span>
+                <a class="chip @ActiveDur(null)" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-category="@Model.Category">Любая</a>
+                <a class="chip @ActiveDur("short")" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-category="@Model.Category" asp-route-durationFilter="short">до 30 мин</a>
+                <a class="chip @ActiveDur("mid")" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-category="@Model.Category" asp-route-durationFilter="mid">45–60 мин</a>
+                <a class="chip @ActiveDur("long")" asp-page="Service" asp-route-branchId="@Model.BranchId" asp-route-category="@Model.Category" asp-route-durationFilter="long">от 75 мин</a>
+            </div>
+        </div>
+    }
+
     <div>
+        @if (Model.Services.Count == 0)
+        {
+            <div class="empty-card">Ничего не найдено по выбранным фильтрам. <a asp-page="Service" asp-route-branchId="@Model.BranchId">Сбросить</a>.</div>
+        }
         @foreach (var service in Model.Services)
         {
             <a class="service-row"
@@ -27,7 +59,13 @@
                     {
                         <div class="meta">@service.Description</div>
                     }
-                    <div class="duration mt-1">@service.DurationMinutes мин</div>
+                    <div class="duration mt-1">
+                        @service.DurationMinutes мин
+                        @if (service.Category != ServiceCategory.Other)
+                        {
+                            <span class="sep">·</span><span class="category-tag">@ServiceCategoryLabels.Label(service.Category)</span>
+                        }
+                    </div>
                 </div>
                 <div class="price">@service.Price.ToString("0") ₽</div>
             </a>

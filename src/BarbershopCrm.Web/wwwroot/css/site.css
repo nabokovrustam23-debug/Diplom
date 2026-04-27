@@ -1258,3 +1258,103 @@ body { min-height: 100vh; }
     position: static;
   }
 }
+
+/* Публичные фильтры (чип-кнопки) на странице выбора услуги */
+.public-filter-bar {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 14px 16px; background: var(--paper); border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.public-filter-row {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+}
+.public-filter-label {
+  color: var(--muted); font-size: 0.82rem; margin-right: 6px;
+  font-variant-caps: all-small-caps; letter-spacing: 0.08em;
+}
+.chip {
+  display: inline-block; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 999px;
+  font-size: 0.88rem; color: var(--text);
+  background: var(--paper-2, #fff); transition: all .15s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+.chip.is-active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chip.is-active:hover { color: #fff; }
+.category-tag { color: var(--muted); }
+.empty-card {
+  padding: 20px; text-align: center; color: var(--muted);
+  background: var(--paper); border: 1px dashed var(--border); border-radius: 16px;
+}
+
+/* Страница филиала: сетка мастеров и прайс-листа */
+.branch-hero {
+  padding: 22px 24px; border-radius: 20px; background: var(--paper);
+  border: 1px solid var(--border); margin-bottom: 24px;
+}
+.branch-hero h2 { margin: 0 0 6px 0; }
+.branch-hero .meta { color: var(--muted); }
+.branch-hero .meta + .meta { margin-top: 4px; }
+.branch-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+@media (max-width: 900px) { .branch-grid { grid-template-columns: 1fr; } }
+.branch-panel {
+  padding: 20px; background: var(--paper); border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.branch-panel h3 { margin-top: 0; }
+.branch-master-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 10px 0; border-top: 1px solid var(--border);
+}
+.branch-master-row:first-of-type { border-top: 0; }
+.branch-master-row .title { font-weight: 600; }
+.branch-master-row .position { color: var(--muted); font-size: 0.88rem; }
+.branch-master-row .next-slot {
+  color: var(--accent); font-size: 0.88rem; white-space: nowrap; margin-left: 12px;
+}
+.branch-service-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 0; border-top: 1px solid var(--border);
+}
+.branch-service-line:first-of-type { border-top: 0; }
+.branch-service-line .name { color: var(--text); }
+.branch-service-line .meta { color: var(--muted); font-size: 0.85rem; }
+.branch-service-line .price { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Sticky-сводка на шаге контакта */
+.summary-card {
+  position: sticky; top: 20px;
+  padding: 18px 20px; background: var(--paper); border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.summary-card h4 { margin: 0 0 12px 0; font-size: 1rem; }
+.summary-card dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 12px; }
+.summary-card dt { color: var(--muted); font-size: 0.85rem; }
+.summary-card dd { margin: 0; color: var(--text); font-size: 0.95rem; }
+.summary-card .total { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 1.08rem; }
+.summary-card .total .price { color: var(--accent); font-weight: 600; }
+
+/* Раздел «Клиенты» */
+.clients-table td.notes { color: var(--muted); font-size: 0.9rem; max-width: 360px; }
+.badge-repeat {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  background: rgba(175, 131, 70, 0.14); color: var(--accent);
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+  margin-left: 6px;
+}
+
+/* Календарь недели — для расписания мастера */
+.week-grid {
+  display: grid; grid-template-columns: 80px repeat(7, 1fr); gap: 1px;
+  background: var(--border); border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; font-size: 0.85rem;
+}
+.week-grid .cell { background: var(--paper); padding: 6px 8px; min-height: 28px; }
+.week-grid .cell.header { background: var(--paper-2, #fff); font-weight: 600; text-align: center; }
+.week-grid .cell.time { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.week-grid .cell.work { background: rgba(175, 131, 70, 0.16); }
+.week-grid .cell.lunch { background: rgba(175, 131, 70, 0.06); color: var(--muted); }
+.week-grid .cell.off { background: repeating-linear-gradient(45deg, var(--paper), var(--paper) 6px, var(--border) 6px, var(--border) 7px); color: var(--muted); }
+.week-grid .cell.busy { background: rgba(200, 92, 80, 0.18); }
