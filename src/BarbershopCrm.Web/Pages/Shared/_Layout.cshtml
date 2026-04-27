@@ -28,6 +28,7 @@
                     {
                         <a asp-page="/Admin/Index">Админка</a>
                     }
+                    <a class="user-badge" asp-area="Identity" asp-page="/Account/Manage/Index" title="Личный кабинет">@(User.Identity?.Name ?? "")</a>
                     <form asp-area="Identity" asp-page="/Account/Logout"
                           asp-route-returnUrl="@Url.Page("/Index")"
                           method="post" style="display:inline">
@@ -37,6 +38,7 @@
                 else
                 {
                     <a asp-area="Identity" asp-page="/Account/Login">Вход</a>
+                    <a asp-area="Identity" asp-page="/Account/Register">Регистрация</a>
                 }
             </nav>
         </div>

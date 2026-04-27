@@ -1,0 +1,83 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Личный кабинет";
+}
+
+<section class="container mt-4">
+    <div class="profile-hero">
+        <div class="profile-avatar">@Model.Initials</div>
+        <div class="profile-info">
+            <div class="name">@Model.FullName</div>
+            <div class="email">@Model.Email</div>
+            @if (!string.IsNullOrEmpty(Model.RoleLabel))
+            {
+                <span class="role">@Model.RoleLabel</span>
+            }
+        </div>
+    </div>
+
+    <ul class="manage-nav">
+        <li><a asp-page="./Index" class="active">Профиль</a></li>
+        <li><a asp-page="./ChangePassword">Сменить пароль</a></li>
+    </ul>
+
+    <div class="row row-split">
+        <div>
+            <h3>Личные данные</h3>
+
+            @if (!string.IsNullOrEmpty(Model.StatusMessage))
+            {
+                <div class="alert alert-success" role="alert">@Model.StatusMessage</div>
+            }
+
+            <form id="profile-form" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="@(ViewData.ModelState.IsValid ? "display:none" : "")"></div>
+
+                <div class="field">
+                    <label asp-for="Input.LastName">Фамилия</label>
+                    <input asp-for="Input.LastName" class="form-control" />
+                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Input.FirstName">Имя</label>
+                    <input asp-for="Input.FirstName" class="form-control" />
+                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Input.MiddleName">Отчество (необязательно)</label>
+                    <input asp-for="Input.MiddleName" class="form-control" />
+                    <span asp-validation-for="Input.MiddleName" class="text-danger"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Input.Phone">Телефон</label>
+                    <input asp-for="Input.Phone" class="form-control" />
+                    <span asp-validation-for="Input.Phone" class="text-danger"></span>
+                </div>
+
+                <button id="update-profile-button" type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+
+        <div>
+            <h3>Сводка</h3>
+            <dl class="summary-list">
+                <dt>E-mail</dt>
+                <dd>@Model.Email</dd>
+                <dt>Телефон</dt>
+                <dd>@(string.IsNullOrEmpty(Model.Input.Phone) ? "—" : Model.Input.Phone)</dd>
+                <dt>Роль</dt>
+                <dd>@(string.IsNullOrEmpty(Model.RoleLabel) ? "Клиент" : Model.RoleLabel)</dd>
+                <dt>Записей</dt>
+                <dd>@Model.BookingsCount</dd>
+            </dl>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

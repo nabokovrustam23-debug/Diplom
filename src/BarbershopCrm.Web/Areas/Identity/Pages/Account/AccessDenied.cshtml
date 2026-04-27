@@ -1,0 +1,17 @@
+@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Доступ запрещён";
+}
+
+<section class="container">
+    <div class="identity-shell">
+        <div class="identity-ornament">✦ ✦ ✦</div>
+        <h1>Доступ запрещён</h1>
+        <p class="identity-sub">У вашей учётной записи нет прав на эту страницу. Обратитесь к администратору, если считаете, что это ошибка.</p>
+
+        <div class="text-center mt-3">
+            <a class="btn btn-primary" asp-page="/Index" asp-area="">На главную</a>
+        </div>
+    </div>
+</section>
