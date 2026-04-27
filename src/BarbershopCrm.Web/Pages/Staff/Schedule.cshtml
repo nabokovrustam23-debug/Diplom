@@ -1,0 +1,145 @@
+@page
+@using BarbershopCrm.Domain.Enums
+@model BarbershopCrm.Web.Pages.Staff.ScheduleModel
+@{
+    ViewData["Title"] = "Расписание мастера";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Расписание</div>
+    <h2 class="mt-2 mb-2">
+        @if (Model.CurrentMaster is not null)
+        {
+            @Model.CurrentMaster.Persona.LastName @Model.CurrentMaster.Persona.FirstName
+        }
+    </h2>
+
+    <partial name="_StaffNav" />
+
+    <form method="get" class="filter-form mb-3">
+        <div class="filter-row">
+            @if (Model.MasterOptions.Count > 0)
+            {
+                <div class="field">
+                    <label>Мастер</label>
+                    <select name="MasterId">
+                        @foreach (var m in Model.MasterOptions)
+                        {
+                            <option value="@m.MasterId" selected="@(Model.MasterId == m.MasterId)">@m.Persona.LastName @m.Persona.FirstName</option>
+                        }
+                    </select>
+                </div>
+            }
+            <div class="field">
+                <label>Неделя с</label>
+                <input type="date" name="WeekStart" value="@Model.WeekStart?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-outline btn-sm">Показать</button>
+            </div>
+        </div>
+    </form>
+
+    <h3 class="mt-3">Неделя @Model.WeekStart?.ToString("dd.MM") – @Model.WeekStart?.AddDays(6).ToString("dd.MM.yyyy")</h3>
+
+    @if (Model.WeekDays.Count == 7)
+    {
+        <div class="week-grid mt-3">
+            <div class="cell header">Время</div>
+            @foreach (var d in Model.WeekDays)
+            {
+                <div class="cell header">@d.ToString("ddd dd.MM")</div>
+            }
+            @foreach (var hour in Model.HourRows)
+            {
+                <div class="cell time">@hour.ToString("HH:mm")</div>
+                @foreach (var d in Model.WeekDays)
+                {
+                    var hourEnd = hour.AddMinutes(60);
+                    var intervals = Model.WeekSchedules.Where(w => w.WorkDate == d
+                        && w.StartTime < hourEnd && w.EndTime > hour).ToList();
+                    var isOff = intervals.Any(w => w.ScheduleType == ScheduleType.DayOff
+                        || w.ScheduleType == ScheduleType.Vacation
+                        || w.ScheduleType == ScheduleType.SickLeave);
+                    var isLunch = intervals.Any(w => w.ScheduleType == ScheduleType.Lunch);
+                    var isWork = intervals.Any(w => w.ScheduleType == ScheduleType.Work);
+                    var booking = Model.WeekBookings.FirstOrDefault(b =>
+                        DateOnly.FromDateTime(b.StartDateTime) == d
+                        && TimeOnly.FromDateTime(b.StartDateTime) < hourEnd
+                        && TimeOnly.FromDateTime(b.StartDateTime).AddMinutes(b.DurationMinutes) > hour);
+                    string cls = "cell";
+                    if (isOff) cls += " off";
+                    else if (booking is not null) cls += " busy";
+                    else if (isLunch) cls += " lunch";
+                    else if (isWork) cls += " work";
+                    string label = "";
+                    if (booking is not null) label = booking.Service.Name + " · " + booking.Client.Persona.LastName;
+                    else if (isOff) label = "❌";
+                    else if (isLunch) label = "🍴";
+                    <div class="@cls" title="@label">@label</div>
+                }
+            }
+        </div>
+    }
+
+    <h3 class="mt-5">Исключения и блокировки (отпуск, больничный, занятость)</h3>
+    <table class="data-table mb-3">
+        <thead>
+            <tr><th>Дата</th><th>Интервал</th><th>Тип</th><th class="actions"></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.WeekSchedules.Where(w => w.ScheduleType != ScheduleType.Work && w.ScheduleType != ScheduleType.Lunch))
+            {
+                <tr>
+                    <td class="mono">@row.WorkDate.ToString("dd.MM.yyyy") (@row.WorkDate.ToString("ddd"))</td>
+                    <td class="mono">@row.StartTime.ToString("HH:mm")–@row.EndTime.ToString("HH:mm")</td>
+                    <td>@BarbershopCrm.Web.Pages.Staff.ScheduleModel.ScheduleTypeLabel(row.ScheduleType)</td>
+                    <td class="actions">
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@row.WorkScheduleId" style="display:inline;">
+                            <input type="hidden" name="MasterId" value="@Model.MasterId" />
+                            <input type="hidden" name="WeekStart" value="@Model.WeekStart?.ToString("yyyy-MM-dd")" />
+                            <button type="submit" class="action-link action-link--danger">Снять</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <details class="mb-5">
+        <summary class="btn btn-outline btn-sm" style="cursor:pointer;">+ Добавить исключение</summary>
+        <form method="post" asp-page-handler="AddException" class="filter-form mt-2">
+            <input type="hidden" name="MasterId" value="@Model.MasterId" />
+            <input type="hidden" name="WeekStart" value="@Model.WeekStart?.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="masterId" value="@Model.CurrentMaster?.MasterId" />
+            <div class="filter-row">
+                <div class="field">
+                    <label>Дата</label>
+                    <input type="date" name="workDate" required />
+                </div>
+                <div class="field">
+                    <label>Тип</label>
+                    <select name="scheduleType">
+                        <option value="3">Выходной</option>
+                        <option value="4">Отпуск</option>
+                        <option value="5">Больничный</option>
+                        <option value="2">Обед</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Начало</label>
+                    <input type="time" name="startTime" value="00:00" />
+                </div>
+                <div class="field">
+                    <label>Окончание</label>
+                    <input type="time" name="endTime" value="23:59" />
+                </div>
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary btn-sm">Добавить</button>
+                </div>
+            </div>
+        </form>
+    </details>
+</div>

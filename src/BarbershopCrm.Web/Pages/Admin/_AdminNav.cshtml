@@ -9,11 +9,15 @@
     <a class="@Active("/Admin/Services")" asp-page="/Admin/Services/Index">Услуги</a>
     <a class="@Active("/Admin/Masters")" asp-page="/Admin/Masters/Index">Мастера</a>
     <a class="@Active("/Admin/Bookings")" asp-page="/Admin/Bookings/Index">Записи</a>
+    @if (User.IsInRole("Owner"))
+    {
+        <a class="@Active("/Admin/Users")" asp-page="/Admin/Users/Index">Пользователи</a>
+    }
 </nav>
 
 <style>
     .admin-nav {
-        display: flex; gap: 4px; border-bottom: 1px solid var(--border);
+        display: flex; gap: 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
     }
     .admin-nav a {
         padding: 14px 20px; color: var(--text-muted); font-size: 0.92rem;

@@ -20,11 +20,19 @@ builder.Services
 
 builder.Services.AddRazorPages(options =>
 {
-    options.Conventions.AuthorizeFolder("/Admin", "OwnerOnly");
+    // Раздел «Админка» (филиалы, услуги, мастера, записи, клиенты, аналитика)
+    // доступен владельцу сети и администратору филиала.
+    options.Conventions.AuthorizeFolder("/Admin", "AdminAccess");
+    // Управление пользователями и ролями — только владельцу.
+    options.Conventions.AuthorizeFolder("/Admin/Users", "OwnerOnly");
+    // Кабинет мастера — владельцу, администратору и самому мастеру.
+    options.Conventions.AuthorizeFolder("/Staff", "StaffAccess");
 });
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("OwnerOnly", policy => policy.RequireRole("Owner"));
+    options.AddPolicy("AdminAccess", policy => policy.RequireRole("Owner", "Admin"));
+    options.AddPolicy("StaffAccess", policy => policy.RequireRole("Owner", "Admin", "Master"));
 });
 builder.Services.AddScoped<ISlotService, SlotService>();
 

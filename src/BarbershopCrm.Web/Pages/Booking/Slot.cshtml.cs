@@ -32,7 +32,7 @@ public class SlotModel : PageModel
 
     public Branch? Branch { get; private set; }
     public Domain.Entities.Service? Service { get; private set; }
-    public Master? Master { get; private set; }
+    public Domain.Entities.Master? Master { get; private set; }
     public bool IsAnyMaster => MasterId == 0;
 
     public IReadOnlyList<DateOnly> AvailableDates { get; private set; } = Array.Empty<DateOnly>();

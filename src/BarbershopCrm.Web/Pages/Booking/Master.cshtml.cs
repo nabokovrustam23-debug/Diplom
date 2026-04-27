@@ -29,7 +29,7 @@ public class MasterModel : PageModel
     public IReadOnlyList<MasterCard> Masters { get; private set; } = Array.Empty<MasterCard>();
     public (DateOnly Date, TimeOnly Time)? AnyMasterNextSlot { get; private set; }
 
-    public record MasterCard(Master Master, (DateOnly Date, TimeOnly Time)? NextSlot);
+    public record MasterCard(Domain.Entities.Master Master, (DateOnly Date, TimeOnly Time)? NextSlot);
 
     public async Task<IActionResult> OnGetAsync()
     {

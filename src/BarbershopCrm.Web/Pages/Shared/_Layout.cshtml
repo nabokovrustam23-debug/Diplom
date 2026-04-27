@@ -24,9 +24,13 @@
                 <a asp-page="/Booking/Index" class="cta">Записаться</a>
                 @if (SignInManager.IsSignedIn(User))
                 {
-                    @if (User.IsInRole("Owner"))
+                    @if (User.IsInRole("Owner") || User.IsInRole("Admin"))
                     {
                         <a asp-page="/Admin/Index">Админка</a>
+                    }
+                    @if (User.IsInRole("Master"))
+                    {
+                        <a asp-page="/Staff/Index">Кабинет мастера</a>
                     }
                     <a class="user-badge" asp-area="Identity" asp-page="/Account/Manage/Index" title="Личный кабинет">@(User.Identity?.Name ?? "")</a>
                     <form asp-area="Identity" asp-page="/Account/Logout"

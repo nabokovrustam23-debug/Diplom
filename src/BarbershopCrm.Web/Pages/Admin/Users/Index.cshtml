@@ -1,0 +1,59 @@
+@page
+@using BarbershopCrm.Infrastructure.Identity
+@model BarbershopCrm.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Пользователи и роли";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Система / Роли</div>
+    <h2 class="mt-2 mb-2">Пользователи</h2>
+    <p class="text-muted mb-4">Список всех учётных записей сети с текущими ролями. Смена роли — немедленно, без перезапуска.</p>
+
+    <partial name="../_AdminNav" />
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="notice notice-success mb-3">@Model.StatusMessage</div>
+    }
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>ФИО</th>
+                <th>Телефон</th>
+                <th>Роль</th>
+                <th class="actions">Сменить роль</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Users)
+            {
+                <tr>
+                    <td class="mono">@u.Email</td>
+                    <td>@u.FullName</td>
+                    <td class="mono text-muted">@u.Phone</td>
+                    <td>@u.RoleLabel</td>
+                    <td class="actions">
+                        <form method="post" asp-page-handler="SetRole" asp-route-userId="@u.UserId" style="display:inline-flex;gap:6px;">
+                            <select name="role" class="form-select" style="min-width:160px;">
+                                @foreach (var r in BarbershopCrm.Web.Pages.Admin.Users.IndexModel.AllRoles)
+                                {
+                                    <option value="@r" selected="@(u.RoleCode == r)">@BarbershopCrm.Web.Pages.Admin.Users.IndexModel.RoleLabel(r)</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-outline btn-sm">Сохранить</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="text-muted mt-3" style="font-size:0.85rem;">
+        Демо-учётки: <span class="mono">@IdentitySeeder.OwnerEmail</span> / @IdentitySeeder.OwnerPassword,
+        <span class="mono">@IdentitySeeder.AdminEmail</span> / @IdentitySeeder.AdminPassword,
+        мастера — <span class="mono">master{MasterId}@@tihiychas.ru</span> / @IdentitySeeder.MasterPassword.
+    </p>
+</div>
