@@ -50,6 +50,27 @@
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
 
+        <div class="field">
+            <label>Пожелания (необязательно)</label>
+            <div class="wishes-grid">
+                @foreach (var option in BarbershopCrm.Web.Pages.Booking.ContactModel.WishOptions)
+                {
+                    var checkedAttr = Model.Input.Wishes.Contains(option) ? "checked" : null;
+                    <label class="wish-chip">
+                        <input type="checkbox" name="Input.Wishes" value="@option" checked="@checkedAttr" />
+                        <span>@option</span>
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="field">
+            <label asp-for="Input.Notes">Комментарий мастеру (необязательно)</label>
+            <textarea asp-for="Input.Notes" rows="2" maxlength="500"
+                      placeholder="Например: «прошлый раз делали fade на 1.5 — повторить»"></textarea>
+            <span asp-validation-for="Input.Notes" class="text-danger"></span>
+        </div>
+
         <div class="flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary">Подтвердить запись</button>
             <a class="btn btn-outline"

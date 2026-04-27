@@ -79,10 +79,13 @@
             </label>
         </div>
 
-        <h5 class="mt-4 mb-2">Филиалы</h5>
+        <h5 class="mt-4 mb-2">Филиал</h5>
         <div class="field">
-            <select asp-for="Input.BranchIds" asp-items="@Model.BranchOptions" multiple size="@Math.Min(6, Math.Max(3, Model.BranchOptions.Count))"></select>
-            <p class="text-muted mt-1" style="font-size:.85rem;">Зажмите Ctrl (Cmd) для выбора нескольких.</p>
+            <select asp-for="Input.BranchId" asp-items="@Model.BranchOptions">
+                <option value="">— выберите филиал —</option>
+            </select>
+            <span asp-validation-for="Input.BranchId" class="text-danger"></span>
+            <p class="text-muted mt-1" style="font-size:.85rem;">Один мастер закреплён за одним филиалом.</p>
         </div>
 
         <h5 class="mt-4 mb-2">Услуги</h5>

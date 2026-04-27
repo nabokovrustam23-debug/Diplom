@@ -9,14 +9,21 @@
 
     <div class="eyebrow">Шаг 04</div>
     <h2 class="mt-2 mb-1">Когда удобно?</h2>
-    @if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
+    @if (Model.Branch is not null && Model.Service is not null)
     {
         <p class="context-line">
             @Model.Branch.Name
             <span class="sep">·</span>
             @Model.Service.Name (@Model.Service.DurationMinutes мин, @Model.Service.Price.ToString("0") ₽)
             <span class="sep">·</span>
-            @Model.Master.Persona.LastName @Model.Master.Persona.FirstName
+            @if (Model.IsAnyMaster)
+            {
+                <text>Любой мастер</text>
+            }
+            else if (Model.Master is not null)
+            {
+                @($"{Model.Master.Persona.LastName} {Model.Master.Persona.FirstName}")
+            }
         </p>
     }
 
@@ -41,25 +48,36 @@
     {
         <div class="notice notice-warn">
             <h4>На эту дату свободных слотов нет.</h4>
-            <p class="mb-0 text-muted">Попробуйте другой день или другого мастера.</p>
+            <p class="mb-0 text-muted">Попробуйте другой день@(Model.IsAnyMaster ? "" : " или другого мастера").</p>
         </div>
     }
     else
     {
-        <div class="slot-row">
-            @foreach (var slot in Model.AvailableSlots)
-            {
-                var startIso = (Model.Date!.Value.ToDateTime(slot)).ToString("yyyy-MM-ddTHH:mm");
-                <a class="slot-pill"
-                   asp-page="Contact"
-                   asp-route-branchId="@Model.BranchId"
-                   asp-route-serviceId="@Model.ServiceId"
-                   asp-route-masterId="@Model.MasterId"
-                   asp-route-start="@startIso">
-                    @slot.ToString("HH:mm")
-                </a>
-            }
-        </div>
+        @foreach (var group in new[] {
+            ("Утро", Model.SlotsMorning),
+            ("День", Model.SlotsDay),
+            ("Вечер", Model.SlotsEvening)
+        })
+        {
+            if (group.Item2.Count == 0) { continue; }
+            <div class="slot-group">
+                <div class="slot-group-title">@group.Item1</div>
+                <div class="slot-row">
+                    @foreach (var slot in group.Item2)
+                    {
+                        var startIso = (Model.Date!.Value.ToDateTime(slot.Time)).ToString("yyyy-MM-ddTHH:mm");
+                        <a class="slot-pill"
+                           asp-page="Contact"
+                           asp-route-branchId="@Model.BranchId"
+                           asp-route-serviceId="@Model.ServiceId"
+                           asp-route-masterId="@slot.MasterId"
+                           asp-route-start="@startIso">
+                            @slot.Time.ToString("HH:mm")
+                        </a>
+                    }
+                </div>
+            </div>
+        }
     }
 
     <a class="btn-ghost mt-5"

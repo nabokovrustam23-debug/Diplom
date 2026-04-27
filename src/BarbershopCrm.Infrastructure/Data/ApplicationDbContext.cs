@@ -86,6 +86,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
             e.Property(x => x.Description).HasMaxLength(1000);
             e.Property(x => x.Price).HasColumnType("decimal(10, 2)");
+            e.Property(x => x.DisplayOrder).HasDefaultValue(0);
         });
     }
 
@@ -197,6 +198,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.HasKey(x => x.BookingId);
             e.Property(x => x.Status).HasConversion<int>().HasDefaultValue(BookingStatus.Created);
             e.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            e.Property(x => x.Notes).HasMaxLength(500);
+            e.Property(x => x.Wishes).HasMaxLength(500);
 
             e.HasIndex(x => new { x.MasterId, x.StartDateTime });
             e.HasIndex(x => x.ClientId);

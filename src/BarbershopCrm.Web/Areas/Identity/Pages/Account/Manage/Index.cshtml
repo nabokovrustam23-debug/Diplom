@@ -1,7 +1,27 @@
 @page
+@using BarbershopCrm.Domain.Enums
 @model IndexModel
 @{
     ViewData["Title"] = "Личный кабинет";
+
+    string StatusBadge(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "badge",
+        BookingStatus.Confirmed => "badge badge-accent",
+        BookingStatus.Completed => "badge badge-success",
+        BookingStatus.Cancelled => "badge badge-danger",
+        BookingStatus.NoShow => "badge badge-danger",
+        _ => "badge"
+    };
+    string StatusRu(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "Создана",
+        BookingStatus.Confirmed => "Подтверждена",
+        BookingStatus.Completed => "Завершена",
+        BookingStatus.Cancelled => "Отменена",
+        BookingStatus.NoShow => "Не пришёл",
+        _ => s.ToString()
+    };
 }
 
 <section class="container mt-4">
@@ -71,11 +91,88 @@
                 <dd>@(string.IsNullOrEmpty(Model.Input.Phone) ? "—" : Model.Input.Phone)</dd>
                 <dt>Роль</dt>
                 <dd>@(string.IsNullOrEmpty(Model.RoleLabel) ? "Клиент" : Model.RoleLabel)</dd>
-                <dt>Записей</dt>
+                <dt>Записей всего</dt>
                 <dd>@Model.BookingsCount</dd>
             </dl>
+            <a class="btn btn-primary mt-3" asp-page="/Booking/Index">+ Записаться</a>
         </div>
     </div>
+
+    <h3 class="mt-5">Ближайшие записи</h3>
+    @if (Model.UpcomingBookings.Count == 0)
+    {
+        <p class="text-muted">У вас пока нет будущих записей.
+            <a asp-page="/Booking/Index">Записаться →</a></p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Когда</th>
+                    <th>Услуга</th>
+                    <th>Мастер</th>
+                    <th>Филиал</th>
+                    <th>Статус</th>
+                    <th class="actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.UpcomingBookings)
+                {
+                    var canCancel = b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed;
+                    <tr>
+                        <td class="mono">@b.BookingId.ToString("0000")</td>
+                        <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
+                        <td>@b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span></td>
+                        <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
+                        <td class="text-muted">@b.Branch.Name</td>
+                        <td><span class="@StatusBadge(b.Status)">@StatusRu(b.Status)</span></td>
+                        <td class="actions">
+                            @if (canCancel)
+                            {
+                                <form method="post" asp-page-handler="CancelBooking" asp-route-bookingId="@b.BookingId" style="display:inline;"
+                                      onsubmit="return confirm('Отменить запись № @b.BookingId.ToString("0000")?');">
+                                    <button type="submit" class="action-link action-link--danger">Отменить</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.PastBookings.Count > 0)
+    {
+        <h3 class="mt-5">История визитов</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Когда</th>
+                    <th>Услуга</th>
+                    <th>Мастер</th>
+                    <th>Филиал</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.PastBookings)
+                {
+                    <tr>
+                        <td class="mono">@b.BookingId.ToString("0000")</td>
+                        <td class="mono">@b.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span></td>
+                        <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
+                        <td class="text-muted">@b.Branch.Name</td>
+                        <td><span class="@StatusBadge(b.Status)">@StatusRu(b.Status)</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </section>
 
 @section Scripts {

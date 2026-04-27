@@ -21,6 +21,13 @@
         BookingStatus.NoShow => "Не пришёл",
         _ => s.ToString()
     };
+    var datePresets = new[]
+    {
+        ("today", "Сегодня"),
+        ("tomorrow", "Завтра"),
+        ("week", "Ближайшие 7 дней"),
+        ("past", "Прошедшие")
+    };
 }
 
 <div class="container mt-5">
@@ -30,14 +37,91 @@
 
     <partial name="../_AdminNav" />
 
-    <div class="flex gap-2 mb-3">
-        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "" : "")"
-           asp-page="Index">Все</a>
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "is-active" : "")"
+           asp-page="Index"
+           asp-route-dateFilter="@Model.DateFilter"
+           asp-route-branchId="@Model.BranchId"
+           asp-route-masterId="@Model.MasterId"
+           asp-route-q="@Model.Q">Все</a>
         @foreach (var s in Enum.GetValues<BookingStatus>())
         {
-            <a class="btn btn-outline btn-sm" asp-page="Index" asp-route-statusFilter="@s.ToString()">@StatusRu(s)</a>
+            var isActive = Model.StatusFilter == s.ToString();
+            <a class="btn btn-outline btn-sm @(isActive ? "is-active" : "")"
+               asp-page="Index"
+               asp-route-statusFilter="@s.ToString()"
+               asp-route-dateFilter="@Model.DateFilter"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-q="@Model.Q">@StatusRu(s)</a>
         }
     </div>
+
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.DateFilter) && !Model.FromDate.HasValue && !Model.ToDate.HasValue ? "is-active" : "")"
+           asp-page="Index"
+           asp-route-statusFilter="@Model.StatusFilter"
+           asp-route-branchId="@Model.BranchId"
+           asp-route-masterId="@Model.MasterId"
+           asp-route-q="@Model.Q">За всё время</a>
+        @foreach (var (key, label) in datePresets)
+        {
+            var isActive = Model.DateFilter == key;
+            <a class="btn btn-outline btn-sm @(isActive ? "is-active" : "")"
+               asp-page="Index"
+               asp-route-statusFilter="@Model.StatusFilter"
+               asp-route-dateFilter="@key"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-q="@Model.Q">@label</a>
+        }
+    </div>
+
+    <form method="get" class="filter-form mb-4">
+        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+        <input type="hidden" name="DateFilter" value="" />
+
+        <div class="filter-row">
+            <div class="field">
+                <label>Период с</label>
+                <input type="date" name="FromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>по</label>
+                <input type="date" name="ToDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>Филиал</label>
+                <select name="BranchId">
+                    <option value="">Все филиалы</option>
+                    @foreach (var br in Model.Branches)
+                    {
+                        var sel = Model.BranchId == br.BranchId ? "selected" : null;
+                        <option value="@br.BranchId" selected="@sel">@br.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Мастер</label>
+                <select name="MasterId">
+                    <option value="">Все мастера</option>
+                    @foreach (var m in Model.Masters)
+                    {
+                        var sel = Model.MasterId == m.MasterId ? "selected" : null;
+                        <option value="@m.MasterId" selected="@sel">@m.Persona.LastName @m.Persona.FirstName</option>
+                    }
+                </select>
+            </div>
+            <div class="field field--grow">
+                <label>Поиск (фамилия / имя / телефон)</label>
+                <input type="search" name="Q" value="@Model.Q" placeholder="Тестов, +79991111111…" />
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Применить</button>
+                <a class="btn btn-outline btn-sm" asp-page="Index">Сбросить</a>
+            </div>
+        </div>
+    </form>
 
     <table class="data-table">
         <thead>
@@ -59,7 +143,17 @@
                     <td class="mono">@b.BookingId.ToString("0000")</td>
                     <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
                     <td>@b.Client.Persona.LastName @b.Client.Persona.FirstName<br/><span class="text-faint mono" style="font-size:.8rem;">@b.Client.Persona.Phone</span></td>
-                    <td>@b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span></td>
+                    <td>
+                        @b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span>
+                        @if (!string.IsNullOrEmpty(b.Wishes))
+                        {
+                            <div class="text-faint" style="font-size:.78rem;line-height:1.3;">@b.Wishes.Replace(";", " · ")</div>
+                        }
+                        @if (!string.IsNullOrEmpty(b.Notes))
+                        {
+                            <div class="text-faint" style="font-size:.78rem;font-style:italic;line-height:1.3;">«@b.Notes»</div>
+                        }
+                    </td>
                     <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
                     <td class="text-muted">@b.Branch.Name</td>
                     <td><span class="@Badge(b.Status)">@StatusRu(b.Status)</span></td>
@@ -68,21 +162,25 @@
                         {
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Confirmed)" />
-                                <button type="submit" style="background:none;border:0;color:var(--accent);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Подтвердить</button>
+                                <button type="submit" class="action-link action-link--accent">Подтвердить</button>
                             </form>
                         }
                         @if (b.Status == BookingStatus.Confirmed)
                         {
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Completed)" />
-                                <button type="submit" style="background:none;border:0;color:var(--success);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Завершить</button>
+                                <button type="submit" class="action-link action-link--success">Завершить</button>
+                            </form>
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.NoShow)" />
+                                <button type="submit" class="action-link action-link--muted">Не пришёл</button>
                             </form>
                         }
                         @if (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed)
                         {
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Cancelled)" />
-                                <button type="submit" style="background:none;border:0;color:var(--danger);cursor:pointer;font-family:var(--sans);font-size:.9rem;">Отменить</button>
+                                <button type="submit" class="action-link action-link--danger">Отменить</button>
                             </form>
                         }
                     </td>
@@ -92,6 +190,6 @@
     </table>
     @if (Model.Bookings.Count == 0)
     {
-        <p class="text-muted mt-3">Записей пока нет.</p>
+        <p class="text-muted mt-3">Записей по выбранным фильтрам не найдено.</p>
     }
 </div>

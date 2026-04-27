@@ -22,7 +22,8 @@ public class EditModel : PageModel
             Name = s.Name,
             Description = s.Description,
             DurationMinutes = s.DurationMinutes,
-            Price = s.Price
+            Price = s.Price,
+            DisplayOrder = s.DisplayOrder
         };
         return Page();
     }
@@ -42,6 +43,7 @@ public class EditModel : PageModel
         s.Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim();
         s.DurationMinutes = Input.DurationMinutes;
         s.Price = Input.Price;
+        s.DisplayOrder = Input.DisplayOrder;
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

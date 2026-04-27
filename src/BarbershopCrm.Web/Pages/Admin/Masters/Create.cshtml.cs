@@ -33,7 +33,8 @@ public class CreateModel : PageModel
         [StringLength(1000)] public string? Bio { get; set; }
         public bool IsActive { get; set; } = true;
 
-        public List<int> BranchIds { get; set; } = new();
+        [Required(ErrorMessage = "Выберите филиал.")]
+        public int BranchId { get; set; }
         public List<int> ServiceIds { get; set; } = new();
     }
 
@@ -72,8 +73,8 @@ public class CreateModel : PageModel
         _db.Masters.Add(master);
         await _db.SaveChangesAsync();
 
-        foreach (var bid in Input.BranchIds.Distinct())
-            _db.MasterBranches.Add(new MasterBranch { MasterId = master.MasterId, BranchId = bid });
+        // Один мастер — один филиал: добавляем единственную связь.
+        _db.MasterBranches.Add(new MasterBranch { MasterId = master.MasterId, BranchId = Input.BranchId });
         foreach (var sid in Input.ServiceIds.Distinct())
             _db.MasterServices.Add(new MasterService { MasterId = master.MasterId, ServiceId = sid });
         await _db.SaveChangesAsync();

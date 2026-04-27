@@ -33,6 +33,12 @@
                 <span asp-validation-for="Input.Price" class="text-danger"></span>
             </div>
         </div>
+        <div class="field">
+            <label asp-for="Input.DisplayOrder">Порядок вывода</label>
+            <input asp-for="Input.DisplayOrder" type="number" min="0" max="9999" step="10" />
+            <span class="text-faint" style="font-size:.85rem;">Чем меньше число, тем выше услуга в списке. Шаг 10.</span>
+            <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+        </div>
 
         <div class="flex gap-2 mt-3">
             <button type="submit" class="btn btn-primary">Сохранить</button>
