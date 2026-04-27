@@ -61,6 +61,9 @@
         {
             var isBusy = card.NextSlot is null;
             <div class="master-card @(isBusy ? "master-card--busy" : null)">
+                <div class="master-avatar">
+                    @card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]
+                </div>
                 <div class="position">@card.Master.Position</div>
                 <div class="name">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
                 @if (!string.IsNullOrWhiteSpace(card.Master.Bio))

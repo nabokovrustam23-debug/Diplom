@@ -6,13 +6,16 @@
 
 <section class="hero">
     <div class="container">
-        <div class="eyebrow">Барбершопы Краснодара и Сочи</div>
-        <h1>Тихий час<br/><em>для своего барбера.</em></h1>
+        <div class="hero-kicker">Краснодар · Сочи · спокойная запись</div>
+        <h1>Тихий час<br/><em>без лишнего шума.</em></h1>
         <p class="lead">
-            Быстрая запись без регистрации, постоянный мастер и ровно столько разговоров,
-            сколько нужно. Дальше — пусть подождёт.
+            Выберите филиал, услугу и мастера — а мы соберём визит в один аккуратный талон.
+            Хотите тишины во время стрижки? Просто отметьте это при записи.
         </p>
-        <a class="btn btn-primary btn-lg" asp-page="/Booking/Index">Записаться онлайн</a>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" asp-page="/Booking/Index">Записаться онлайн</a>
+            <span class="quiet-badge">тихий визит доступен</span>
+        </div>
 
         <div class="hero-meta">
             <div><span class="text-accent">3</span>&nbsp;&nbsp;филиала</div>
@@ -23,26 +26,26 @@
 </section>
 
 <section class="container mt-8">
-    <div class="grid grid-cols-3">
-        <div>
+    <div class="grid grid-cols-3 feature-grid">
+        <div class="feature-card">
             <div class="eyebrow">01 / Филиал</div>
             <h3 class="mt-2">Свой барбершоп</h3>
             <p class="text-muted">
                 Выбирайте филиал по адресу, графику и составу мастеров. Все цены и услуги — едины для сети.
             </p>
         </div>
-        <div>
+        <div class="feature-card">
             <div class="eyebrow">02 / Мастер</div>
             <h3 class="mt-2">Свой барбер</h3>
             <p class="text-muted">
                 Ваш мастер ведёт собственное расписание. Запишитесь к тому, кому доверяете стрижку и бороду.
             </p>
         </div>
-        <div>
+        <div class="feature-card feature-card--accent">
             <div class="eyebrow">03 / Запись</div>
-            <h3 class="mt-2">Без регистрации</h3>
+            <h3 class="mt-2">Без регистрации и шума</h3>
             <p class="text-muted">
-                Введите имя и телефон. Личный кабинет — позже, если решите вернуться. И мы знаем, что решите.
+                Введите имя и телефон, выберите пожелания и приходите в том настроении, в котором удобно вам.
             </p>
         </div>
     </div>
