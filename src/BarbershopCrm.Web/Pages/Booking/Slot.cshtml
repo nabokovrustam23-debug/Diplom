@@ -27,6 +27,28 @@
         </p>
     }
 
+    <div class="public-filter-bar mt-4">
+        <div class="public-filter-row">
+            <div class="public-filter-label">Быстрый фильтр</div>
+            <a class="chip @(Model.Quick == null ? "is-active" : "")"
+               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId">
+                Все слоты
+            </a>
+            <a class="chip @(Model.Quick == "earliest" ? "is-active" : "")"
+               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="earliest">
+                Самое раннее
+            </a>
+            <a class="chip @(Model.Quick == "evening" ? "is-active" : "")"
+               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="evening">
+                Вечером
+            </a>
+            <a class="chip @(Model.Quick == "weekend" ? "is-active" : "")"
+               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-quick="weekend">
+                В выходные
+            </a>
+        </div>
+    </div>
+
     <h5 class="mt-4 mb-2">Дата</h5>
     <div class="date-row mb-5">
         @foreach (var date in Model.AvailableDates)
@@ -37,7 +59,8 @@
                asp-route-branchId="@Model.BranchId"
                asp-route-serviceId="@Model.ServiceId"
                asp-route-masterId="@Model.MasterId"
-               asp-route-date="@date.ToString("yyyy-MM-dd")">
+               asp-route-date="@date.ToString("yyyy-MM-dd")"
+               asp-route-quick="@Model.Quick">
                 @date.ToString("dd.MM ddd", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
             </a>
         }

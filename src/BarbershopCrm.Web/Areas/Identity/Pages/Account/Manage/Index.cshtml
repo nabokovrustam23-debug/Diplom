@@ -132,6 +132,7 @@
                         <td class="actions">
                             @if (canCancel)
                             {
+                                <a class="action-link action-link--accent" asp-page="/Booking/Reschedule" asp-area="" asp-route-bookingId="@b.BookingId">Перенести</a>
                                 <form method="post" asp-page-handler="CancelBooking" asp-route-bookingId="@b.BookingId" style="display:inline;"
                                       onsubmit="return confirm('Отменить запись № @b.BookingId.ToString("0000")?');">
                                     <button type="submit" class="action-link action-link--danger">Отменить</button>

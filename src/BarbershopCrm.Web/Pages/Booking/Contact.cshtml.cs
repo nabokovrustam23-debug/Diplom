@@ -57,7 +57,14 @@ public class ContactModel : PageModel
 
     public Branch? Branch { get; private set; }
     public Domain.Entities.Service? Service { get; private set; }
-    public Master? Master { get; private set; }
+    public Domain.Entities.Master? Master { get; private set; }
+
+    /// <summary>
+    /// Подсказка «ближайшее доступное» — заполняется, когда выбранный слот
+    /// уже занят: показывается клиенту вместе с дружелюбным сообщением и
+    /// ссылкой назад на экран выбора.
+    /// </summary>
+    public (DateOnly Date, TimeOnly Time)? SuggestedSlot { get; private set; }
 
     public class ContactInput
     {
@@ -131,7 +138,13 @@ public class ContactModel : PageModel
 
         if (!available.Contains(time))
         {
-            ModelState.AddModelError(string.Empty, "Выбранный слот уже занят. Пожалуйста, выберите другое время.");
+            // Для дружелюбной ошибки подтягиваем ближайшее свободное окно.
+            SuggestedSlot = await _slots.GetNextAvailableSlotAsync(MasterId, BranchId, ServiceId, horizonDays: 14);
+            var suggestion = SuggestedSlot is null
+                ? "К сожалению, свободных слотов на ближайшие две недели не осталось."
+                : $"Ближайшее свободное окно — {SuggestedSlot.Value.Date:dd.MM} в {SuggestedSlot.Value.Time:HH\\:mm}.";
+            ModelState.AddModelError(string.Empty,
+                $"Ой, этот слот уже заняли. {suggestion} Вернитесь на шаг «Время» и выберите другое.");
             return Page();
         }
 

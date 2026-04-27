@@ -30,6 +30,10 @@ public class SlotModel : PageModel
     [BindProperty(SupportsGet = true)]
     public DateOnly? Date { get; set; }
 
+    /// <summary>Быстрый фильтр: «earliest» (ближайшее окно), «evening» (только вечер), «weekend» (только выходные).</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Quick { get; set; }
+
     public Branch? Branch { get; private set; }
     public Domain.Entities.Service? Service { get; private set; }
     public Domain.Entities.Master? Master { get; private set; }
@@ -76,7 +80,33 @@ public class SlotModel : PageModel
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
-        AvailableDates = Enumerable.Range(0, 7).Select(i => today.AddDays(i)).ToList();
+        var allDates = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
+
+        // Фильтр «Выходные» — оставляем в подборе дат только суб/вс.
+        AvailableDates = Quick == "weekend"
+            ? allDates.Where(d => d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday).ToList()
+            : allDates;
+
+        if (AvailableDates.Count == 0) AvailableDates = allDates;
+
+        // Для «earliest»: ищем ближайший день, в котором есть хотя бы один слот.
+        if (Quick == "earliest" && Date is null)
+        {
+            foreach (var d in AvailableDates)
+            {
+                var candidate = IsAnyMaster
+                    ? await _slots.GetAvailableSlotsForAnyMasterAsync(BranchId, ServiceId, d)
+                    : (await _slots.GetAvailableSlotsAsync(MasterId, BranchId, ServiceId, d))
+                        .Select(t => (t, MasterId)).ToList();
+                if (candidate.Count > 0)
+                {
+                    Date = d;
+                    AvailableSlots = candidate.Take(1).ToList();
+                    return Page();
+                }
+            }
+        }
+
         Date ??= AvailableDates[0];
 
         if (IsAnyMaster)
@@ -87,6 +117,12 @@ public class SlotModel : PageModel
         {
             var slots = await _slots.GetAvailableSlotsAsync(MasterId, BranchId, ServiceId, Date.Value);
             AvailableSlots = slots.Select(t => (t, MasterId)).ToList();
+        }
+
+        // Фильтр «Вечером» — оставляем только слоты >= 17:00.
+        if (Quick == "evening")
+        {
+            AvailableSlots = AvailableSlots.Where(s => s.Time >= new TimeOnly(17, 0)).ToList();
         }
 
         return Page();
