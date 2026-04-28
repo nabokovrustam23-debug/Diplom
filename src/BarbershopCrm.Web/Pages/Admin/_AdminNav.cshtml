@@ -15,6 +15,7 @@
     @if (User.IsInRole("Owner"))
     {
         <a class="@Active("/Admin/Users")" asp-page="/Admin/Users/Index">Пользователи</a>
+        <a class="@Active("/Admin/AuditLog")" asp-page="/Admin/AuditLog/Index">Журнал</a>
     }
 </nav>
 

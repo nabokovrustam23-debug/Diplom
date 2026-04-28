@@ -88,10 +88,13 @@ public class RescheduleModel : PageModel
         {
             Current.RescheduledFromUtc = Current.StartDateTime;
         }
+        var oldStart = Current.StartDateTime;
         Current.StartDateTime = newDate.ToDateTime(newTime);
         // Сбрасываем статус на Created: мастеру нужно подтвердить перенос.
         if (Current.Status == BookingStatus.Confirmed) Current.Status = BookingStatus.Created;
 
+        BarbershopCrm.Web.Common.AuditLogger.Log(_db, User, "Reschedule", "Booking", Current.BookingId.ToString(),
+            $"from={oldStart:yyyy-MM-dd HH:mm} to={Current.StartDateTime:yyyy-MM-dd HH:mm}");
         await _db.SaveChangesAsync();
 
         TempData["StatusMessage"] = $"Запись перенесена на {newDate:dd.MM} в {newTime:HH\\:mm}.";

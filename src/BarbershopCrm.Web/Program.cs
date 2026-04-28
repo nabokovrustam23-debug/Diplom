@@ -25,6 +25,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Admin", "AdminAccess");
     // Управление пользователями и ролями — только владельцу.
     options.Conventions.AuthorizeFolder("/Admin/Users", "OwnerOnly");
+    options.Conventions.AuthorizeFolder("/Admin/AuditLog", "OwnerOnly");
     // Кабинет мастера — владельцу, администратору и самому мастеру.
     options.Conventions.AuthorizeFolder("/Staff", "StaffAccess");
 });

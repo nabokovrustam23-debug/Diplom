@@ -27,6 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,6 +44,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         ConfigureBooking(builder);
         ConfigureVisit(builder);
         ConfigureApplicationUser(builder);
+        ConfigureAuditLog(builder);
     }
 
     private static void ConfigurePersona(ModelBuilder b)
@@ -256,6 +258,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
                 .WithOne()
                 .HasForeignKey<ApplicationUser>(x => x.PersonaId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+    }
+
+    private static void ConfigureAuditLog(ModelBuilder b)
+    {
+        b.Entity<AuditLog>(e =>
+        {
+            e.ToTable("AuditLogs");
+            e.HasKey(x => x.AuditLogId);
+            e.Property(x => x.ActorEmail).HasMaxLength(256).IsRequired();
+            e.Property(x => x.Action).HasMaxLength(64).IsRequired();
+            e.Property(x => x.EntityType).HasMaxLength(64).IsRequired();
+            e.Property(x => x.EntityId).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Details).HasMaxLength(1024);
+            e.HasIndex(x => x.AtUtc);
+            e.HasIndex(x => new { x.EntityType, x.EntityId });
         });
     }
 }

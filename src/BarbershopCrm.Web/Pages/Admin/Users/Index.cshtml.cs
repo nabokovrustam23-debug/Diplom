@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -147,6 +148,10 @@ public class IndexModel : PageModel
         }
         await _userManager.AddToRoleAsync(user, role);
 
+        AuditLogger.Log(_db, User, "SetRole", "User", user.Id.ToString(),
+            $"old=[{string.Join(',', current)}] new={role} email={user.Email}");
+        await _db.SaveChangesAsync();
+
         StatusMessage = $"Роль пользователя {user.Email} обновлена на «{RoleLabel(role)}».";
         return RedirectToPage();
     }
@@ -215,6 +220,9 @@ public class IndexModel : PageModel
         }
         await _userManager.AddToRoleAsync(user, Invite.Role);
 
+        AuditLogger.Log(_db, User, "Invite", "User", user.Id.ToString(), $"role={Invite.Role}, email={email}");
+        await _db.SaveChangesAsync();
+
         ResetPasswordEmail = email;
         ResetPasswordValue = temp;
         StatusMessage = $"Создан пользователь {email} с ролью «{RoleLabel(Invite.Role)}». Временный пароль — выше.";
@@ -250,6 +258,9 @@ public class IndexModel : PageModel
             StatusMessage = "Не удалось установить новый пароль: " + string.Join("; ", add.Errors.Select(e => e.Description));
             return RedirectToPage();
         }
+
+        AuditLogger.Log(_db, User, "ResetPassword", "User", user.Id.ToString(), $"email={user.Email}");
+        await _db.SaveChangesAsync();
 
         ResetPasswordEmail = user.Email;
         ResetPasswordValue = newPassword;
