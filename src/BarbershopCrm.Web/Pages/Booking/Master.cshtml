@@ -28,6 +28,12 @@
 
     <div class="eyebrow">Шаг 03</div>
     <h2 class="mt-2 mb-1">К кому?</h2>
+    <p class="text-muted mb-3" style="font-size:.85rem;">
+        <span class="badge badge-warn" style="font-size:.65rem;">загружен</span>
+        — ближайшее окно &gt; 5 дней.
+        <span class="text-faint" style="margin: 0 8px;">·</span>
+        <em>«Нет окон»</em> — на горизонте 14 дней нет свободного времени для этой услуги.
+    </p>
     @if (Model.Branch is not null && Model.Service is not null)
     {
         <p class="context-line">

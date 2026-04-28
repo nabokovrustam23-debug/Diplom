@@ -14,6 +14,13 @@
 
     <partial name="../_AdminNav" />
 
+    @if (!string.IsNullOrEmpty(TempData["IndexError"] as string))
+    {
+        <div class="notice notice-warn mb-3">
+            <p class="mb-0">@TempData["IndexError"]</p>
+        </div>
+    }
+
     <form method="get" class="filter-form mb-3">
         <div class="filter-row">
             <div class="field" style="flex:1;">

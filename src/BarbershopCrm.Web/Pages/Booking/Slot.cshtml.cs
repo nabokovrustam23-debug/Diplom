@@ -120,11 +120,32 @@ public class SlotModel : PageModel
             }
         }
 
+        // Если день не выбран явно и стартовый день = сегодня, но все слоты
+        // на сегодня уже прошли, автоматически переходим на ближайший день
+        // с доступными окнами — клиент не должен видеть пустой блок «Время».
+        var dateExplicit = Date is not null;
         Date ??= AvailableDates[0];
 
         var slots = await LoadSlotsAsync(Date.Value);
         slots = ApplyPartFilter(slots);
         slots = DropPastIfToday(slots, Date.Value, today);
+
+        if (slots.Count == 0 && !dateExplicit)
+        {
+            foreach (var d in AvailableDates.SkipWhile(d => d <= Date.Value))
+            {
+                var alt = await LoadSlotsAsync(d);
+                alt = ApplyPartFilter(alt);
+                alt = DropPastIfToday(alt, d, today);
+                if (alt.Count > 0)
+                {
+                    Date = d;
+                    slots = alt;
+                    break;
+                }
+            }
+        }
+
         AvailableSlots = slots;
 
         if (AvailableSlots.Count == 0)

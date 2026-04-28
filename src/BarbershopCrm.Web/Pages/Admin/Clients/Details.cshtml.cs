@@ -45,6 +45,9 @@ public class DetailsModel : PageModel
 
     [TempData] public string? StatusMessage { get; set; }
 
+    /// <summary>Сообщение для списка клиентов при попытке открыть несуществующего.</summary>
+    [TempData] public string? IndexError { get; set; }
+
     public int CompletedCount => Bookings.Count(b => b.Status == BookingStatus.Completed);
     public int CancelledCount => Bookings.Count(b => b.Status == BookingStatus.Cancelled);
     public int NoShowCount => Bookings.Count(b => b.Status == BookingStatus.NoShow);
@@ -52,7 +55,11 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        if (!await LoadAsync()) return RedirectToPage("Index");
+        if (!await LoadAsync())
+        {
+            IndexError = $"Клиент №{Id} не найден. Возможно, запись была удалена.";
+            return RedirectToPage("Index");
+        }
         Notes = Client!.Notes;
         Source = Client!.Source;
         return Page();
@@ -61,7 +68,11 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostSaveNotesAsync()
     {
         var client = await _db.Clients.FirstOrDefaultAsync(c => c.ClientId == Id);
-        if (client is null) return RedirectToPage("Index");
+        if (client is null)
+        {
+            IndexError = $"Клиент №{Id} не найден.";
+            return RedirectToPage("Index");
+        }
 
         client.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim();
         client.Source = string.IsNullOrWhiteSpace(Source) ? null : Source.Trim();
