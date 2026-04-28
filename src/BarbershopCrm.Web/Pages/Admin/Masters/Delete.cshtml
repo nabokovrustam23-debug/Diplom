@@ -1,0 +1,47 @@
+@page "{id:int}"
+@model BarbershopCrm.Web.Pages.Admin.Masters.DeleteModel
+@{
+    ViewData["Title"] = "Удаление мастера";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Команда / Мастера</div>
+    <h2 class="mt-2 mb-3">Удаление мастера</h2>
+
+    @if (Model.Master is not null)
+    {
+        <div class="card mb-4" style="max-width:480px;">
+            <div class="eyebrow">@Model.Master.Position</div>
+            <h4 class="mt-2 mb-1">@Model.Master.Persona.LastName @Model.Master.Persona.FirstName</h4>
+            <p class="text-muted mb-1">@Model.Master.Persona.Phone</p>
+            <p class="text-muted mb-0" style="font-size:.9rem;">@Model.Master.Bio</p>
+        </div>
+
+        @if (Model.BookingsCount > 0)
+        {
+            <div class="notice notice-warn" style="max-width:540px;">
+                <h4>Полное удаление невозможно.</h4>
+                <p class="mb-0 text-muted">
+                    На мастера оформлено записей: @Model.BookingsCount. Безопасный вариант — деактивировать карточку:
+                    мастер исчезнет из выбора при онлайн-записи, но история останется.
+                </p>
+            </div>
+            <form method="post" class="mt-3">
+                <input type="hidden" name="deactivateOnly" value="true" />
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Деактивировать</button>
+                    <a asp-page="Index" class="btn btn-outline">Отмена</a>
+                </div>
+            </form>
+        }
+        else
+        {
+            <form method="post">
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-danger">Удалить безвозвратно</button>
+                    <a asp-page="Index" class="btn btn-outline">Отмена</a>
+                </div>
+            </form>
+        }
+    }
+</div>

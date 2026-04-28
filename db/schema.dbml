@@ -1,0 +1,144 @@
+// =============================================================================
+// Источник ER-диаграммы для dbdiagram.io
+// Открыть на https://dbdiagram.io/d и импортировать этот файл.
+// Из dbdiagram.io экспортируется PNG/PDF для вставки в раздел 2.3 ПЗ
+// (рисунок 2.1 — «ER-диаграмма модулей CRM-системы сети барбершопов»).
+// =============================================================================
+
+Project barbershop_crm {
+  database_type: 'MSSQL'
+  Note: 'CRM-система сети барбершопов «Тихий час». Диплом Набоков Р. О., гр. 09.02.07, ГБПОУ КК ККЭП.'
+}
+
+Table Persona {
+  PersonaId   int         [pk, increment]
+  LastName    nvarchar(100) [not null]
+  FirstName   nvarchar(100) [not null]
+  MiddleName  nvarchar(100)
+  Phone       nvarchar(20)  [not null, unique]
+  Email       nvarchar(256)
+  BirthDate   date
+  Gender      nchar(1)
+
+  Note: 'Физическое лицо. Общие персональные данные, на которые ссылаются User, Client, Master (1:1).'
+}
+
+Table Branches {
+  BranchId     int          [pk, increment]
+  Name         nvarchar(200) [not null]
+  Address      nvarchar(500) [not null]
+  Phone        nvarchar(20)
+  OpeningTime  time         [not null]
+  ClosingTime  time         [not null]
+
+  Note: 'Филиал сети барбершопов.'
+}
+
+Table Services {
+  ServiceId        int            [pk, increment]
+  Name             nvarchar(200)  [not null]
+  Description      nvarchar(1000)
+  DurationMinutes  int            [not null]
+  Price            decimal(10,2)  [not null]
+
+  Note: 'Услуга прайс-листа.'
+}
+
+Table Masters {
+  MasterId    int            [pk, increment]
+  PersonaId   int            [not null, unique, ref: > Persona.PersonaId]
+  Position    nvarchar(100)  [not null]
+  HireDate    date           [not null]
+  AvatarPath  nvarchar(500)
+  Bio         nvarchar(2000)
+  IsActive    bit            [not null, default: 1]
+
+  Note: 'Мастер-барбер.'
+}
+
+Table Clients {
+  ClientId        int            [pk, increment]
+  PersonaId       int            [not null, unique, ref: > Persona.PersonaId]
+  Source          nvarchar(100)
+  Notes           nvarchar(1000)
+  FirstVisitDate  date
+  CreatedAt       datetime2      [not null, default: `SYSDATETIME()`]
+
+  Note: 'Клиент сети. Может быть гостевой (без User) или авторизованный.'
+}
+
+Table MasterBranch {
+  MasterId  int [not null, ref: > Masters.MasterId]
+  BranchId  int [not null, ref: > Branches.BranchId]
+
+  indexes {
+    (MasterId, BranchId) [pk]
+  }
+
+  Note: 'Связка мастер ↔ филиал (N:M).'
+}
+
+Table MasterService {
+  MasterId   int [not null, ref: > Masters.MasterId]
+  ServiceId  int [not null, ref: > Services.ServiceId]
+
+  indexes {
+    (MasterId, ServiceId) [pk]
+  }
+
+  Note: 'Связка мастер ↔ услуга (N:M). Перечень услуг, которые умеет оказывать мастер.'
+}
+
+Table WorkSchedules {
+  WorkScheduleId  int           [pk, increment]
+  MasterId        int           [not null, ref: > Masters.MasterId]
+  BranchId        int           [not null, ref: > Branches.BranchId]
+  WorkDate        date          [not null]
+  StartTime       time          [not null]
+  EndTime         time          [not null]
+  ScheduleType    nvarchar(20)  [not null, note: "Work / Lunch / DayOff / Vacation / SickLeave"]
+
+  indexes {
+    (MasterId, WorkDate, StartTime) [unique]
+    (MasterId, WorkDate)
+  }
+
+  Note: 'Рабочий график мастера на конкретный день в конкретном филиале.'
+}
+
+Table Bookings {
+  BookingId        int           [pk, increment]
+  ClientId         int           [not null, ref: > Clients.ClientId]
+  MasterId         int           [not null, ref: > Masters.MasterId]
+  ServiceId        int           [not null, ref: > Services.ServiceId]
+  BranchId         int           [not null, ref: > Branches.BranchId]
+  StartDateTime    datetime2     [not null]
+  DurationMinutes  int           [not null]
+  Status           nvarchar(20)  [not null, default: "Created", note: "Created / Confirmed / Cancelled / Completed / NoShow"]
+  CreatedAt        datetime2     [not null, default: `SYSDATETIME()`]
+
+  indexes {
+    (MasterId, StartDateTime)
+    (ClientId)
+  }
+
+  Note: 'Запись клиента на приём (бронирование времени мастера).'
+}
+
+Table Visits {
+  VisitId       int            [pk, increment]
+  BookingId     int            [not null, unique, ref: > Bookings.BookingId]
+  TotalAmount   decimal(10,2)  [not null]
+  MasterNotes   nvarchar(2000)
+  CompletedAt   datetime2      [not null, default: `SYSDATETIME()`]
+
+  Note: 'Факт оказания услуги (для записи в статусе Completed).'
+}
+
+// =============================================================================
+// Примечание: таблицы ASP.NET Core Identity (AspNetUsers, AspNetRoles и др.)
+// не отображаются в ER-диаграмме ПЗ, так как создаются автоматически
+// средствами EF Core Migrations. Связь AspNetUsers → Persona (через
+// добавленный миграцией столбец PersonaId INT UNIQUE) обобщена сущностью
+// User в описании модели данных (подраздел 2.3 ПЗ).
+// =============================================================================

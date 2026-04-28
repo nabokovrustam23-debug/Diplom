@@ -1,0 +1,69 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.SlotModel
+@{
+    ViewData["Title"] = "Запись · Дата и время";
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="4" />
+
+    <div class="eyebrow">Шаг 04</div>
+    <h2 class="mt-2 mb-1">Когда удобно?</h2>
+    @if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name (@Model.Service.DurationMinutes мин, @Model.Service.Price.ToString("0") ₽)
+            <span class="sep">·</span>
+            @Model.Master.Persona.LastName @Model.Master.Persona.FirstName
+        </p>
+    }
+
+    <h5 class="mt-4 mb-2">Дата</h5>
+    <div class="date-row mb-5">
+        @foreach (var date in Model.AvailableDates)
+        {
+            var isActive = Model.Date == date;
+            <a class="date-pill @(isActive ? "is-active" : "")"
+               asp-page="Slot"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-date="@date.ToString("yyyy-MM-dd")">
+                @date.ToString("dd.MM ddd", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+            </a>
+        }
+    </div>
+
+    <h5 class="mb-2">Время</h5>
+    @if (Model.AvailableSlots.Count == 0)
+    {
+        <div class="notice notice-warn">
+            <h4>На эту дату свободных слотов нет.</h4>
+            <p class="mb-0 text-muted">Попробуйте другой день или другого мастера.</p>
+        </div>
+    }
+    else
+    {
+        <div class="slot-row">
+            @foreach (var slot in Model.AvailableSlots)
+            {
+                var startIso = (Model.Date!.Value.ToDateTime(slot)).ToString("yyyy-MM-ddTHH:mm");
+                <a class="slot-pill"
+                   asp-page="Contact"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId"
+                   asp-route-start="@startIso">
+                    @slot.ToString("HH:mm")
+                </a>
+            }
+        </div>
+    }
+
+    <a class="btn-ghost mt-5"
+       asp-page="Master"
+       asp-route-branchId="@Model.BranchId"
+       asp-route-serviceId="@Model.ServiceId">← Другой мастер</a>
+</div>

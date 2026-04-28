@@ -1,0 +1,100 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Masters.CreateModel
+@{
+    ViewData["Title"] = "Новый мастер";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Команда / Мастера</div>
+    <h2 class="mt-2 mb-5">Новый мастер</h2>
+
+    <form method="post" class="col-form" style="max-width:640px;">
+        <div asp-validation-summary="ModelOnly" class="notice notice-danger"
+             style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+        <h5 class="mt-2 mb-2">Персональные данные</h5>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.LastName">Фамилия</label>
+                <input asp-for="Input.LastName" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.FirstName">Имя</label>
+                <input asp-for="Input.FirstName" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Input.MiddleName">Отчество</label>
+            <input asp-for="Input.MiddleName" />
+        </div>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.Phone">Телефон</label>
+                <input asp-for="Input.Phone" type="tel" placeholder="+7 (999) 000-00-00" />
+                <span asp-validation-for="Input.Phone" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Email">E-mail</label>
+                <input asp-for="Input.Email" type="email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.Gender">Пол</label>
+                <select asp-for="Input.Gender">
+                    <option value="Male">Мужской</option>
+                    <option value="Female">Женский</option>
+                    <option value="Other">Другой</option>
+                </select>
+            </div>
+            <div class="field">
+                <label asp-for="Input.BirthDate">Дата рождения</label>
+                <input asp-for="Input.BirthDate" type="date" />
+            </div>
+        </div>
+
+        <h5 class="mt-4 mb-2">Профессиональные данные</h5>
+        <div class="grid grid-cols-2">
+            <div class="field">
+                <label asp-for="Input.Position">Должность</label>
+                <input asp-for="Input.Position" />
+                <span asp-validation-for="Input.Position" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.HireDate">Дата приёма</label>
+                <input asp-for="Input.HireDate" type="date" />
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Bio">Биография / описание</label>
+            <textarea asp-for="Input.Bio" rows="3" placeholder="Опыт, специализации, любимые стрижки..."></textarea>
+        </div>
+        <div class="field">
+            <label style="text-transform:none;letter-spacing:0;color:var(--text);font-family:var(--sans);font-size:0.95rem;">
+                <input type="checkbox" asp-for="Input.IsActive" style="width:auto;margin-right:8px;vertical-align:middle;" />
+                Активный мастер (отображается в выборе при записи)
+            </label>
+        </div>
+
+        <h5 class="mt-4 mb-2">Филиалы</h5>
+        <div class="field">
+            <select asp-for="Input.BranchIds" asp-items="@Model.BranchOptions" multiple size="@Math.Min(6, Math.Max(3, Model.BranchOptions.Count))"></select>
+            <p class="text-muted mt-1" style="font-size:.85rem;">Зажмите Ctrl (Cmd) для выбора нескольких.</p>
+        </div>
+
+        <h5 class="mt-4 mb-2">Услуги</h5>
+        <div class="field">
+            <select asp-for="Input.ServiceIds" asp-items="@Model.ServiceOptions" multiple size="@Math.Min(8, Math.Max(3, Model.ServiceOptions.Count))"></select>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a asp-page="Index" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

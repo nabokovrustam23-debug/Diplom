@@ -1,0 +1,38 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.ServiceModel
+@{
+    ViewData["Title"] = "Запись · Услуга";
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="2" />
+
+    <div class="eyebrow">Шаг 02</div>
+    <h2 class="mt-2 mb-1">Что делаем?</h2>
+    @if (Model.Branch is not null)
+    {
+        <p class="context-line">@Model.Branch.Name <span class="sep">·</span> @Model.Branch.Address</p>
+    }
+
+    <div>
+        @foreach (var service in Model.Services)
+        {
+            <a class="service-row"
+               asp-page="Master"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@service.ServiceId">
+                <div>
+                    <h4 class="mb-1" style="font-size:1.3rem;">@service.Name</h4>
+                    @if (!string.IsNullOrWhiteSpace(service.Description))
+                    {
+                        <div class="meta">@service.Description</div>
+                    }
+                    <div class="duration mt-1">@service.DurationMinutes мин</div>
+                </div>
+                <div class="price">@service.Price.ToString("0") ₽</div>
+            </a>
+        }
+    </div>
+
+    <a class="btn-ghost mt-5" asp-page="Index">← Другой филиал</a>
+</div>
