@@ -28,6 +28,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Visit> Visits => Set<Visit>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+    public DbSet<ConsentLog> ConsentLogs => Set<ConsentLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -45,6 +48,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         ConfigureVisit(builder);
         ConfigureApplicationUser(builder);
         ConfigureAuditLog(builder);
+        ConfigureReview(builder);
+        ConfigureWaitlist(builder);
+        ConfigureConsentLog(builder);
     }
 
     private static void ConfigurePersona(ModelBuilder b)
@@ -288,6 +294,62 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.Property(x => x.Details).HasMaxLength(1024);
             e.HasIndex(x => x.AtUtc);
             e.HasIndex(x => new { x.EntityType, x.EntityId });
+        });
+    }
+
+    private static void ConfigureReview(ModelBuilder b)
+    {
+        b.Entity<Review>(e =>
+        {
+            e.ToTable("Reviews", t =>
+                t.HasCheckConstraint("CK_Reviews_Rating", "Rating >= 1 AND Rating <= 5"));
+            e.HasKey(x => x.ReviewId);
+            e.Property(x => x.Comment).HasMaxLength(2000);
+            e.HasIndex(x => x.BookingId).IsUnique();
+            e.HasOne(x => x.Booking)
+                .WithOne()
+                .HasForeignKey<Review>(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureWaitlist(ModelBuilder b)
+    {
+        b.Entity<WaitlistEntry>(e =>
+        {
+            e.ToTable("WaitlistEntries");
+            e.HasKey(x => x.WaitlistEntryId);
+            e.Property(x => x.GuestName).HasMaxLength(160);
+            e.Property(x => x.GuestPhone).HasMaxLength(20);
+            e.Property(x => x.Note).HasMaxLength(500);
+            e.HasIndex(x => new { x.BranchId, x.IsClosed });
+            e.HasIndex(x => x.PersonaId);
+
+            e.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.Service).WithMany().HasForeignKey(x => x.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasOne(x => x.Master).WithMany().HasForeignKey(x => x.MasterId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    private static void ConfigureConsentLog(ModelBuilder b)
+    {
+        b.Entity<ConsentLog>(e =>
+        {
+            e.ToTable("ConsentLogs");
+            e.HasKey(x => x.ConsentLogId);
+            e.Property(x => x.PolicyVersion).HasMaxLength(16).IsRequired();
+            e.Property(x => x.IpAddress).HasMaxLength(64);
+            e.Property(x => x.UserAgent).HasMaxLength(512);
+            e.Property(x => x.GuestPhone).HasMaxLength(20);
+            e.HasIndex(x => x.PersonaId);
+            e.HasIndex(x => x.GuestPhone);
+            e.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

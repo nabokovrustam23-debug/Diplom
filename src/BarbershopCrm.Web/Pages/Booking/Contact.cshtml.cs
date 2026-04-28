@@ -8,21 +8,29 @@ using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BarbershopCrm.Web.Pages.Booking;
 
+[EnableRateLimiting("booking")]
 public class ContactModel : PageModel
 {
     private readonly ApplicationDbContext _db;
     private readonly ISlotService _slots;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly BookingPolicyOptions _policy;
+    private readonly ILogger<ContactModel> _log;
 
-    public ContactModel(ApplicationDbContext db, ISlotService slots, UserManager<ApplicationUser> userManager)
+    public ContactModel(ApplicationDbContext db, ISlotService slots, UserManager<ApplicationUser> userManager,
+        IOptions<BookingPolicyOptions> policy, ILogger<ContactModel> log)
     {
         _db = db;
         _slots = slots;
         _userManager = userManager;
+        _policy = policy.Value;
+        _log = log;
     }
 
     /// <summary>
@@ -64,6 +72,17 @@ public class ContactModel : PageModel
     [BindProperty]
     public string IdempotencyKey { get; set; } = string.Empty;
 
+    /// <summary>Текст вопроса капчи («Сколько будет 3 + 5?»).</summary>
+    public string CaptchaQuestion { get; private set; } = string.Empty;
+    /// <summary>Подписанный ответ — генерируется на GET и проверяется на POST.</summary>
+    [BindProperty(Name = SimpleCaptcha.TokenField)]
+    public string CaptchaToken { get; set; } = string.Empty;
+    [BindProperty(Name = SimpleCaptcha.AnswerField)]
+    public string? CaptchaAnswer { get; set; }
+    /// <summary>Honeypot-поле: невидимо в браузере, заполняется только ботами.</summary>
+    [BindProperty(Name = SimpleCaptcha.HoneypotField)]
+    public string? Honeypot { get; set; }
+
     public Branch? Branch { get; private set; }
     public Domain.Entities.Service? Service { get; private set; }
     public Domain.Entities.Master? Master { get; private set; }
@@ -94,10 +113,16 @@ public class ContactModel : PageModel
         [StringLength(256)]
         public string? Email { get; set; }
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessage = "Комментарий не должен быть длиннее 500 символов.")]
         public string? Notes { get; set; }
 
         public List<string> Wishes { get; set; } = new();
+
+        /// <summary>Согласие на обработку персональных данных (152-ФЗ). Обязательно
+        /// для гостей; для авторизованных клиентов согласие подразумевается из регистрации,
+        /// но мы всё равно требуем явный чекбокс — это упрощает аудит.</summary>
+        [Display(Name = "Согласие на обработку персональных данных")]
+        public bool ConsentGiven { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -109,6 +134,12 @@ public class ContactModel : PageModel
 
         // Свежий ключ идемпотентности для этой формы записи.
         IdempotencyKey = Guid.NewGuid().ToString("N");
+
+        // Генерируем простую капчу (вопрос + подписанный токен ответа).
+        var (a, b, token, q) = SimpleCaptcha.New();
+        _ = a; _ = b;
+        CaptchaQuestion = q;
+        CaptchaToken = token;
 
         // Если пользователь залогинен — подставим его контактные данные из Persona.
         if (User.Identity?.IsAuthenticated == true)
@@ -138,8 +169,40 @@ public class ContactModel : PageModel
             return RedirectToPage("Index");
         }
 
+        // Согласие на обработку ПДн обязательно при бронировании.
+        if (!Input.ConsentGiven)
+        {
+            ModelState.AddModelError("Input.ConsentGiven",
+                "Чтобы записаться, поставьте галочку согласия на обработку персональных данных.");
+        }
+
+        // Капча: honeypot должен быть пустым.
+        if (!SimpleCaptcha.HoneypotIsClean(Honeypot))
+        {
+            _log.LogWarning("Booking honeypot triggered from {IP}", HttpContext.Connection.RemoteIpAddress);
+            ModelState.AddModelError(string.Empty,
+                "Не удалось проверить форму. Перезагрузите страницу и попробуйте снова.");
+        }
+        else if (!SimpleCaptcha.Verify(CaptchaAnswer, CaptchaToken))
+        {
+            ModelState.AddModelError(SimpleCaptcha.AnswerField,
+                "Капча не пройдена. Попробуйте ещё раз.");
+        }
+
+        // Проверка горизонта бронирования: запрещаем выбирать дату дальше N дней вперёд.
+        var horizonEnd = DateTime.UtcNow.AddDays(_policy.HorizonDays);
+        if (Start > horizonEnd)
+        {
+            ModelState.AddModelError(string.Empty,
+                $"Запись возможна не дальше, чем на {_policy.HorizonDays} дней вперёд.");
+        }
+
         if (!ModelState.IsValid)
         {
+            // При ошибке валидации перегенерируем капчу — старый токен уже использован.
+            var (_, _, token, q) = SimpleCaptcha.New();
+            CaptchaQuestion = q;
+            CaptchaToken = token;
             return Page();
         }
 
@@ -234,6 +297,19 @@ public class ContactModel : PageModel
             IdempotencyKey = idemGuid
         };
         _db.Bookings.Add(booking);
+
+        // Журнал согласий на обработку ПДн (152-ФЗ).
+        _db.ConsentLogs.Add(new ConsentLog
+        {
+            PersonaId = persona.PersonaId,
+            GuestPhone = phone,
+            PolicyVersion = "1.0",
+            GivenAtUtc = DateTime.UtcNow,
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = Request.Headers.UserAgent.ToString().Length > 512
+                ? Request.Headers.UserAgent.ToString()[..512]
+                : Request.Headers.UserAgent.ToString()
+        });
 
         try
         {

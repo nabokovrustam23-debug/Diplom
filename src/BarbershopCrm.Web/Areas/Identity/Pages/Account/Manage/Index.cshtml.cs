@@ -40,6 +40,9 @@ public class IndexModel : PageModel
     public int BookingsCount { get; set; }
     public IList<Domain.Entities.Booking> UpcomingBookings { get; set; } = new List<Domain.Entities.Booking>();
     public IList<Domain.Entities.Booking> PastBookings { get; set; } = new List<Domain.Entities.Booking>();
+    /// <summary>Идентификаторы записей, на которые клиент уже оставил отзыв
+    /// (чтобы не показывать кнопку «Оставить отзыв» повторно).</summary>
+    public HashSet<int> ReviewedBookingIds { get; set; } = new();
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -199,6 +202,11 @@ public class IndexModel : PageModel
                 .Where(b => b.StartDateTime < now)
                 .Take(20)
                 .ToList();
+
+            var pastIds = PastBookings.Select(b => b.BookingId).ToList();
+            ReviewedBookingIds = (await _db.Reviews.AsNoTracking()
+                .Where(r => pastIds.Contains(r.BookingId))
+                .Select(r => r.BookingId).ToListAsync()).ToHashSet();
         }
     }
 

@@ -1,0 +1,91 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.WaitlistModel
+@{
+    ViewData["Title"] = "Лист ожидания";
+}
+
+<div class="container mt-5" style="max-width:720px;">
+    <h1 class="mb-2">Запись в лист ожидания</h1>
+    <p class="text-muted">
+        Мы свяжемся с вами, как только появится свободный слот в указанном окне.
+        Лист ожидания не гарантирует запись, но повышает шансы попасть к нужному мастеру.
+    </p>
+
+    @if (Model.Saved)
+    {
+        <div class="notice notice-success" role="alert">
+            Готово. Мы добавили вас в лист ожидания и свяжемся при появлении свободного времени.
+        </div>
+        <a class="btn btn-outline mt-3" asp-page="Index">← На главную записи</a>
+    }
+    else
+    {
+        <form method="post">
+            <div asp-validation-summary="All" class="notice notice-danger"
+                 style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+            <div class="field">
+                <label asp-for="Input.BranchId">Филиал</label>
+                <select asp-for="Input.BranchId" asp-items="Model.Branches"></select>
+                <span asp-validation-for="Input.BranchId" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.ServiceId">Услуга</label>
+                <select asp-for="Input.ServiceId" asp-items="Model.Services"></select>
+                <span asp-validation-for="Input.ServiceId" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.MasterId">Мастер (необязательно)</label>
+                <select asp-for="Input.MasterId" asp-items="Model.Masters">
+                    <option value="">— Любой мастер филиала —</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2" style="gap:16px;">
+                <div class="field">
+                    <label asp-for="Input.DateFrom">Желаемое окно — с</label>
+                    <input asp-for="Input.DateFrom" type="date" />
+                    <span asp-validation-for="Input.DateFrom" class="text-danger"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.DateTo">по</label>
+                    <input asp-for="Input.DateTo" type="date" />
+                    <span asp-validation-for="Input.DateTo" class="text-danger"></span>
+                </div>
+            </div>
+
+            @if (!Model.IsAuthenticated)
+            {
+                <div class="grid grid-cols-2" style="gap:16px;">
+                    <div class="field">
+                        <label asp-for="Input.GuestName">Ваше имя</label>
+                        <input asp-for="Input.GuestName" />
+                        <span asp-validation-for="Input.GuestName" class="text-danger"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Input.GuestPhone">Телефон</label>
+                        <input asp-for="Input.GuestPhone" type="tel" placeholder="+7 (999) 000-00-00" />
+                        <span asp-validation-for="Input.GuestPhone" class="text-danger"></span>
+                    </div>
+                </div>
+            }
+
+            <div class="field">
+                <label asp-for="Input.Note">Комментарий (необязательно)</label>
+                <textarea asp-for="Input.Note" rows="2" maxlength="500"></textarea>
+                <span asp-validation-for="Input.Note" class="text-danger"></span>
+            </div>
+
+            <div class="flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Записаться в лист ожидания</button>
+                <a class="btn btn-outline" asp-page="Index">← Отмена</a>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -89,11 +89,18 @@
         <div class="notice notice-warn">
             <h4>Свободных окон нет.</h4>
             <p class="mb-0 text-muted">@(Model.EmptyHint ?? "Попробуйте другой день.")</p>
-            @if (Model.Quick.Length > 0)
-            {
-                <p class="mt-2 mb-0"><a class="btn btn-outline btn-sm"
-                   asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-date="@Model.Date?.ToString("yyyy-MM-dd")">Сбросить фильтры</a></p>
-            }
+            <div class="mt-2 flex gap-1" style="flex-wrap:wrap;">
+                @if (Model.Quick.Length > 0)
+                {
+                    <a class="btn btn-outline btn-sm"
+                       asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-date="@Model.Date?.ToString("yyyy-MM-dd")">Сбросить фильтры</a>
+                }
+                <a class="btn btn-primary btn-sm"
+                   asp-page="Waitlist"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId">Записаться в лист ожидания</a>
+            </div>
         </div>
     }
     else

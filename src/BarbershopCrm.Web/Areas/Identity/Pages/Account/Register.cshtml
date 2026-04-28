@@ -40,7 +40,7 @@
 
             <div class="field">
                 <label asp-for="Input.Password">Пароль</label>
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" type="password" placeholder="Не короче 6 символов" />
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" type="password" placeholder="Не короче 8 символов, цифра и буквы разного регистра" />
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
 
@@ -48,6 +48,17 @@
                 <label asp-for="Input.ConfirmPassword">Повторите пароль</label>
                 <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" type="password" placeholder="Тот же пароль ещё раз" />
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="field" style="margin-top:1rem;">
+                <label class="consent-check">
+                    <input type="checkbox" asp-for="Input.ConsentGiven" value="true" />
+                    <span>
+                        Я даю согласие на обработку персональных данных в соответствии с
+                        <a asp-page="/Privacy" target="_blank" rel="noopener">Политикой</a>.
+                    </span>
+                </label>
+                <span asp-validation-for="Input.ConsentGiven" class="text-danger"></span>
             </div>
 
             <button id="registerSubmit" type="submit" class="btn btn-primary btn-lg btn-block w-full">Зарегистрироваться</button>

@@ -40,6 +40,7 @@
     <ul class="manage-nav">
         <li><a asp-page="./Index" class="active">Профиль</a></li>
         <li><a asp-page="./ChangePassword">Сменить пароль</a></li>
+        <li><a asp-page="./PersonalData">Мои данные (152-ФЗ)</a></li>
     </ul>
 
     <div class="row row-split">
@@ -195,11 +196,13 @@
                     <th>Мастер</th>
                     <th>Филиал</th>
                     <th>Статус</th>
+                    <th class="actions"></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var b in Model.PastBookings)
                 {
+                    var canReview = b.Status == BookingStatus.Completed && !Model.ReviewedBookingIds.Contains(b.BookingId);
                     <tr>
                         <td class="mono">@b.BookingId.ToString("0000")</td>
                         <td class="mono">@b.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
@@ -207,6 +210,16 @@
                         <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
                         <td class="text-muted">@b.Branch.Name</td>
                         <td><span class="@StatusBadge(b.Status)">@StatusRu(b.Status)</span></td>
+                        <td class="actions">
+                            @if (canReview)
+                            {
+                                <a class="action-link action-link--accent" asp-page="/Booking/Review" asp-route-bookingId="@b.BookingId">Оставить отзыв</a>
+                            }
+                            else if (b.Status == BookingStatus.Completed)
+                            {
+                                <span class="text-muted">Отзыв оставлен</span>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>

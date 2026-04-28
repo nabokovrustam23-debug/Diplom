@@ -97,10 +97,24 @@
                 {
                     <div class="bio text-faint">Нет описания.</div>
                 }
+                @if (card.AvgRating is not null)
+                {
+                    <div class="master-rating" aria-label="Средняя оценка @card.AvgRating.Value.ToString("0.0") из 5">
+                        <span class="stars" aria-hidden="true">★</span>
+                        <span>@card.AvgRating.Value.ToString("0.0") · @card.ReviewsCount @(card.ReviewsCount == 1 ? "отзыв" : "отзывов")</span>
+                    </div>
+                }
                 <div class="next-slot @(isBusy ? "next-slot--busy" : null)">@FormatNext(card.NextSlot)</div>
                 @if (isBusy)
                 {
-                    <button class="btn btn-outline" disabled>Нет окон</button>
+                    <div class="flex gap-1" style="flex-direction:column;">
+                        <button class="btn btn-outline" disabled>Нет окон</button>
+                        <a class="btn btn-outline btn-sm"
+                           asp-page="Waitlist"
+                           asp-route-branchId="@Model.BranchId"
+                           asp-route-serviceId="@Model.ServiceId"
+                           asp-route-masterId="@card.Master.MasterId">В лист ожидания</a>
+                    </div>
                 }
                 else
                 {
