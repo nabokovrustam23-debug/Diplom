@@ -31,6 +31,9 @@ Thumbs.db
 barbershop.db
 barbershop.db-shm
 barbershop.db-wal
+app.db
+app.db-shm
+app.db-wal
 
 # Logs / temp
 *.log
