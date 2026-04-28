@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -54,7 +55,13 @@ public class CreateModel : PageModel
     {
         if (!ModelState.IsValid) { await LoadOptionsAsync(); return Page(); }
 
-        var phone = NormalizePhone(Input.Phone);
+        if (!PhoneUtil.IsValid(Input.Phone))
+        {
+            ModelState.AddModelError(nameof(Input.Phone), "Некорректный номер телефона.");
+            await LoadOptionsAsync();
+            return Page();
+        }
+        var phone = PhoneUtil.Normalize(Input.Phone);
         var persona = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
         if (persona is null)
         {
@@ -93,6 +100,8 @@ public class CreateModel : PageModel
         var avatarPath = await AvatarUpload.SaveAsync(_env, Input.AvatarFile, master.MasterId, ModelState);
         if (avatarPath is not null) master.AvatarPath = avatarPath;
 
+        AuditLogger.Log(_db, User, "Create", "Master", master.MasterId.ToString(),
+            $"name={persona.LastName} {persona.FirstName} branch={Input.BranchId}");
         await _db.SaveChangesAsync();
 
         TempData["StatusMessage"] = "Мастер создан. Заполните расписание смен, иначе он не появится в публичной записи.";

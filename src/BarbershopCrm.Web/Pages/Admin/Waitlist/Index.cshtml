@@ -1,0 +1,70 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Waitlist.IndexModel
+@{
+    ViewData["Title"] = "Лист ожидания";
+}
+
+<div class="container mt-5">
+    <div class="flex" style="justify-content:space-between;align-items:center;">
+        <h1 class="m-0">Лист ожидания</h1>
+        <a class="btn btn-outline" asp-page="/Admin/Index">← В админку</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="notice notice-success mt-3" role="alert">@Model.StatusMessage</div>
+    }
+
+    @if (Model.Items.Count == 0)
+    {
+        <p class="text-muted mt-3">Активных заявок в листе ожидания нет.</p>
+    }
+    else
+    {
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>Создано</th>
+                    <th>Клиент</th>
+                    <th>Филиал</th>
+                    <th>Услуга</th>
+                    <th>Мастер</th>
+                    <th>Окно</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.CreatedAtUtc.ToLocalTime().ToString("dd.MM HH:mm")</td>
+                        <td>
+                            @if (item.Persona is not null)
+                            {
+                                @($"{item.Persona.LastName} {item.Persona.FirstName}")
+                                <br /><span class="text-muted">@item.Persona.Phone</span>
+                            }
+                            else
+                            {
+                                @item.GuestName
+                                <br /><span class="text-muted">@item.GuestPhone</span>
+                            }
+                        </td>
+                        <td>@item.Branch?.Name</td>
+                        <td>@item.Service?.Name</td>
+                        <td>@(item.Master is null ? "Любой" : $"{item.Master.Persona.LastName} {item.Master.Persona.FirstName}")</td>
+                        <td>@item.DateFrom.ToString("dd.MM") – @item.DateTo.ToString("dd.MM")</td>
+                        <td>
+                            <form method="post" asp-page-handler="Notify" asp-route-id="@item.WaitlistEntryId" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline">Отметить «уведомлён»</button>
+                            </form>
+                            <form method="post" asp-page-handler="Close" asp-route-id="@item.WaitlistEntryId" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline">Закрыть</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

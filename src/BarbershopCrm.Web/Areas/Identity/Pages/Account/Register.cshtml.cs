@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -59,7 +60,7 @@ public class RegisterModel : PageModel
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Придумайте пароль")]
-        [StringLength(100, ErrorMessage = "Пароль должен быть от {2} до {1} символов.", MinimumLength = 6)]
+        [StringLength(100, ErrorMessage = "Пароль должен быть от {2} до {1} символов.", MinimumLength = 8)]
         [DataType(DataType.Password)]
         [Display(Name = "Пароль")]
         public string Password { get; set; } = string.Empty;
@@ -68,6 +69,9 @@ public class RegisterModel : PageModel
         [Display(Name = "Повторите пароль")]
         [Compare("Password", ErrorMessage = "Пароли не совпадают.")]
         public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Display(Name = "Согласие на обработку персональных данных")]
+        public bool ConsentGiven { get; set; }
     }
 
     public void OnGet(string? returnUrl = null)
@@ -79,12 +83,25 @@ public class RegisterModel : PageModel
     {
         returnUrl ??= Url.Content("~/");
 
+        if (!Input.ConsentGiven)
+        {
+            ModelState.AddModelError(nameof(Input.ConsentGiven),
+                "Чтобы создать аккаунт, поставьте галочку согласия на обработку персональных данных.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();
         }
 
-        var phone = Input.Phone.Trim();
+        // Нормализуем номер к каноническому виду «+7XXXXXXXXXX» — иначе
+        // одни и те же абоненты заводят дубль Persona при разных вариантах ввода.
+        if (!PhoneUtil.IsValid(Input.Phone))
+        {
+            ModelState.AddModelError(nameof(Input.Phone), "Некорректный номер телефона.");
+            return Page();
+        }
+        var phone = PhoneUtil.Normalize(Input.Phone);
         var email = Input.Email.Trim();
 
         // Если по этому телефону уже есть учётная запись — предлагаем войти,
@@ -152,6 +169,20 @@ public class RegisterModel : PageModel
                 _db.Clients.Add(new Client { PersonaId = persona.PersonaId });
                 await _db.SaveChangesAsync();
             }
+
+            // Журнал согласий на обработку ПДн (152-ФЗ).
+            _db.ConsentLogs.Add(new ConsentLog
+            {
+                PersonaId = persona.PersonaId,
+                GuestPhone = phone,
+                PolicyVersion = "1.0",
+                GivenAtUtc = DateTime.UtcNow,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = Request.Headers.UserAgent.ToString().Length > 512
+                    ? Request.Headers.UserAgent.ToString()[..512]
+                    : Request.Headers.UserAgent.ToString()
+            });
+            await _db.SaveChangesAsync();
 
             await _signInManager.SignInAsync(user, isPersistent: false);
             return LocalRedirect(returnUrl);

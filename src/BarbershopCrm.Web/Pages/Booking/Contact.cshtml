@@ -23,6 +23,7 @@
     }
 
     <form method="post" class="booking-contact-layout mt-4">
+        <input type="hidden" asp-for="IdempotencyKey" />
         <div class="ticket-card" style="position:sticky;top:24px;align-self:flex-start;">
             <div class="ticket-label">Талон визита</div>
             <h3>@Model.Service?.Name</h3>
@@ -108,6 +109,35 @@
                 <textarea asp-for="Input.Notes" rows="2" maxlength="500"
                           placeholder="Например: «прошлый раз делали fade на 1.5 — повторить»"></textarea>
                 <span asp-validation-for="Input.Notes" class="text-danger"></span>
+            </div>
+
+            @{ var captchaName = BarbershopCrm.Web.Common.SimpleCaptcha.AnswerField; }
+            @{ var tokenName = BarbershopCrm.Web.Common.SimpleCaptcha.TokenField; }
+            @{ var honeypotName = BarbershopCrm.Web.Common.SimpleCaptcha.HoneypotField; }
+            <div class="field">
+                <label for="captcha-answer">@Model.CaptchaQuestion</label>
+                <input id="captcha-answer" type="text" name="@captchaName" inputmode="numeric"
+                       autocomplete="off" maxlength="3" required
+                       value="" />
+                <input type="hidden" name="@tokenName" value="@Model.CaptchaToken" />
+                <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
+            </div>
+
+            @* Honeypot: поле невидимо, но боты заполняют все поля автоматом. *@
+            <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden;">
+                <label for="@honeypotName">Не заполняйте это поле</label>
+                <input id="@honeypotName" type="text" name="@honeypotName" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="field" style="margin-top:1rem;">
+                <label class="consent-check">
+                    <input type="checkbox" asp-for="Input.ConsentGiven" value="true" />
+                    <span>
+                        Я даю согласие на обработку персональных данных в соответствии с
+                        <a asp-page="/Privacy" target="_blank" rel="noopener">Политикой</a>.
+                    </span>
+                </label>
+                <span asp-validation-for="Input.ConsentGiven" class="text-danger"></span>
             </div>
 
             <div class="flex gap-2 mt-4">

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -50,7 +51,7 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        _db.Services.Add(new Service
+        var service = new Service
         {
             Name = Input.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim(),
@@ -59,7 +60,11 @@ public class CreateModel : PageModel
             DisplayOrder = Input.DisplayOrder,
             Category = Input.Category,
             IsActive = Input.IsActive
-        });
+        };
+        _db.Services.Add(service);
+        await _db.SaveChangesAsync();
+        AuditLogger.Log(_db, User, "Create", "Service", service.ServiceId.ToString(),
+            $"name={service.Name} dur={service.DurationMinutes} price={service.Price}");
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

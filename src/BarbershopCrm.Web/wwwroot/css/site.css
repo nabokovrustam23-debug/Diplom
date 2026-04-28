@@ -1371,3 +1371,61 @@ body { min-height: 100vh; }
 .week-grid .cell.lunch { background: rgba(175, 131, 70, 0.06); color: var(--muted); }
 .week-grid .cell.off { background: repeating-linear-gradient(45deg, var(--paper), var(--paper) 6px, var(--border) 6px, var(--border) 7px); color: var(--muted); }
 .week-grid .cell.busy { background: rgba(200, 92, 80, 0.18); }
+
+/* === Дополнения: рейтинг мастеров, ошибочные страницы, капча, согласие === */
+
+/* Карточка рейтинга на карточке мастера */
+.master-rating {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 6px 0; padding: 2px 10px; border-radius: 999px;
+  background: rgba(175, 131, 70, 0.10); color: var(--accent);
+  font-size: 0.85rem; font-variant-numeric: tabular-nums;
+}
+.master-rating .stars { font-size: 0.95rem; line-height: 1; }
+
+/* Звёздный ввод оценки */
+.rating-input {
+  direction: rtl; display: inline-flex; gap: 4px; font-size: 1.8rem;
+  unicode-bidi: bidi-override;
+}
+.rating-input input[type="radio"] { display: none; }
+.rating-input label {
+  cursor: pointer; color: rgba(0, 0, 0, 0.18); transition: color .15s ease-in-out;
+}
+.rating-input input[type="radio"]:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+  color: var(--accent);
+}
+
+/* Согласие на обработку ПДн */
+.consent-check {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  font-size: 0.92rem; color: var(--text);
+}
+.consent-check input[type="checkbox"] {
+  margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent);
+}
+.consent-check a { color: var(--accent); text-decoration: underline; }
+
+/* Брендированная страница ошибки */
+.error-page {
+  padding: 60px 24px; text-align: center; max-width: 640px; margin: 0 auto;
+}
+.error-page__code {
+  font-family: var(--serif); font-size: 6rem; font-weight: 600;
+  color: var(--accent); line-height: 1; letter-spacing: -0.04em;
+}
+.error-page__title { margin: 16px 0 8px; font-size: 1.6rem; }
+.error-page__message { color: var(--muted); margin-bottom: 24px; }
+.error-page__request-id { font-size: 0.85rem; color: var(--muted); }
+.error-page__actions { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+
+/* Список чтения политики */
+.prose { max-width: 820px; line-height: 1.7; }
+.prose h2 { margin-top: 1.6em; font-size: 1.25rem; }
+.prose ul { padding-left: 1.4em; }
+
+/* Универсальный grid-cols-2 для двух колонок */
+.grid.grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
+@media (max-width: 720px) { .grid.grid-cols-2 { grid-template-columns: 1fr; } }

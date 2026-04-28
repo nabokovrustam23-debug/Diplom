@@ -6,15 +6,23 @@ namespace BarbershopCrm.Infrastructure.Services;
 
 /// <summary>
 /// Реализация <see cref="ISlotService"/> на основе <see cref="ApplicationDbContext"/>.
-/// Шаг сетки слотов — 15 минут.
+/// Шаг сетки слотов — 15 минут. Буфер между записями (на уборку/перерыв)
+/// настраивается через <see cref="SlotServiceOptions"/>.
 /// </summary>
 public class SlotService : ISlotService
 {
     private const int SlotStepMinutes = 15;
 
     private readonly ApplicationDbContext _db;
+    private readonly int _bufferMinutes;
 
-    public SlotService(ApplicationDbContext db) => _db = db;
+    public SlotService(ApplicationDbContext db) : this(db, bufferMinutes: 0) { }
+
+    public SlotService(ApplicationDbContext db, int bufferMinutes)
+    {
+        _db = db;
+        _bufferMinutes = Math.Max(0, bufferMinutes);
+    }
 
     public async Task<IReadOnlyList<TimeOnly>> GetAvailableSlotsAsync(
         int masterId,
@@ -109,8 +117,12 @@ public class SlotService : ISlotService
         foreach (var b in bookings)
         {
             var start = TimeOnly.FromDateTime(b.StartDateTime);
-            var end = start.AddMinutes(b.DurationMinutes);
-            busy.Add((start, end));
+            // Расширяем занятость на буфер с обеих сторон. Это гарантирует, что между
+            // соседними записями (со стороны конца предыдущей и начала следующей)
+            // будет промежуток не меньше bufferMinutes минут.
+            var startWithBuffer = start.AddMinutes(-_bufferMinutes);
+            var endWithBuffer = start.AddMinutes(b.DurationMinutes + _bufferMinutes);
+            busy.Add((startWithBuffer, endWithBuffer));
         }
 
         return busy;

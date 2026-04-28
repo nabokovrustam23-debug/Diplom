@@ -2,10 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BarbershopCrm.Web.Areas.Identity.Pages.Account.Manage;
 
@@ -14,16 +16,22 @@ public class IndexModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ApplicationDbContext _db;
+    private readonly BookingPolicyOptions _policy;
 
     public IndexModel(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ApplicationDbContext db)
+        ApplicationDbContext db,
+        IOptions<BookingPolicyOptions> policy)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _db = db;
+        _policy = policy.Value;
     }
+
+    /// <summary>Минимум часов до начала записи, при котором клиент ещё может её отменить.</summary>
+    public int MinHoursBeforeCancel => _policy.MinHoursBeforeCancel;
 
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
@@ -32,6 +40,9 @@ public class IndexModel : PageModel
     public int BookingsCount { get; set; }
     public IList<Domain.Entities.Booking> UpcomingBookings { get; set; } = new List<Domain.Entities.Booking>();
     public IList<Domain.Entities.Booking> PastBookings { get; set; } = new List<Domain.Entities.Booking>();
+    /// <summary>Идентификаторы записей, на которые клиент уже оставил отзыв
+    /// (чтобы не показывать кнопку «Оставить отзыв» повторно).</summary>
+    public HashSet<int> ReviewedBookingIds { get; set; } = new();
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -96,10 +107,17 @@ public class IndexModel : PageModel
             return Page();
         }
 
+        if (!PhoneUtil.IsValid(Input.Phone))
+        {
+            ModelState.AddModelError(nameof(Input.Phone), "Некорректный номер телефона.");
+            await LoadAsync(user);
+            return Page();
+        }
+
         persona.LastName = Input.LastName.Trim();
         persona.FirstName = Input.FirstName.Trim();
         persona.MiddleName = string.IsNullOrWhiteSpace(Input.MiddleName) ? null : Input.MiddleName.Trim();
-        persona.Phone = Input.Phone.Trim();
+        persona.Phone = PhoneUtil.Normalize(Input.Phone);
 
         // Синхронизируем телефон в Identity-учётке.
         if (user.PhoneNumber != persona.Phone)
@@ -184,6 +202,11 @@ public class IndexModel : PageModel
                 .Where(b => b.StartDateTime < now)
                 .Take(20)
                 .ToList();
+
+            var pastIds = PastBookings.Select(b => b.BookingId).ToList();
+            ReviewedBookingIds = (await _db.Reviews.AsNoTracking()
+                .Where(r => pastIds.Contains(r.BookingId))
+                .Select(r => r.BookingId).ToListAsync()).ToHashSet();
         }
     }
 
@@ -214,7 +237,19 @@ public class IndexModel : PageModel
             return RedirectToPage();
         }
 
+        // Политика отмены: позднее MinHoursBeforeCancel часов до начала
+        // отменить нельзя самостоятельно — только через администратора.
+        var hoursLeft = (booking.StartDateTime - DateTime.UtcNow).TotalHours;
+        if (hoursLeft < _policy.MinHoursBeforeCancel)
+        {
+            StatusMessage = $"Отменить запись можно не позже чем за {_policy.MinHoursBeforeCancel} ч до начала. " +
+                            "Свяжитесь с администратором филиала.";
+            return RedirectToPage();
+        }
+
         booking.Status = Domain.Enums.BookingStatus.Cancelled;
+        AuditLogger.Log(_db, User, "ClientCancel", "Booking", booking.BookingId.ToString(),
+            $"start={booking.StartDateTime:yyyy-MM-dd HH:mm}");
         await _db.SaveChangesAsync();
         StatusMessage = $"Запись № {booking.BookingId:0000} отменена.";
         return RedirectToPage();
