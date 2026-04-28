@@ -4,8 +4,18 @@
 }
 
 <section class="container mt-5" style="max-width:780px;">
+    <nav aria-label="Хлебные крошки">
+        <ol class="breadcrumbs">
+            <li><a asp-page="/Index">Главная</a></li>
+            <li aria-current="page">Помощь</li>
+        </ol>
+    </nav>
     <div class="eyebrow">Помощь</div>
     <h1 class="mt-2">Частые вопросы</h1>
+    <p class="text-muted mt-2 mb-4">
+        Если ответа на ваш вопрос нет ниже — позвоните в любой филиал из раздела
+        <a asp-page="/Contacts">«Контакты»</a> или напишите администратору сети.
+    </p>
 
     <div class="card mt-4">
         <h3 class="mb-2">Можно ли записаться без регистрации?</h3>

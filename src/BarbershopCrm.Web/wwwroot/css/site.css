@@ -1429,3 +1429,113 @@ body { min-height: 100vh; }
 /* Универсальный grid-cols-2 для двух колонок */
 .grid.grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
 @media (max-width: 720px) { .grid.grid-cols-2 { grid-template-columns: 1fr; } }
+
+/* ===== Эвристики Нильсена: skip-link, focus, flash, breadcrumbs ===== */
+
+/* Эвристика №7: ссылка «Перейти к содержимому» для клавиатуры/скринридеров */
+.skip-link {
+    position: absolute; left: 8px; top: -40px;
+    background: var(--accent); color: var(--paper);
+    padding: 8px 16px; border-radius: 0 0 12px 12px;
+    z-index: 200; font-weight: 600; font-size: 0.9rem;
+    transition: top .15s;
+}
+.skip-link:focus {
+    top: 0; outline: 3px solid var(--paper); outline-offset: -3px;
+    text-decoration: none; color: var(--paper);
+}
+
+/* Доступный focus-ring для клавиатурной навигации */
+:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.btn:focus-visible, .chip:focus-visible, .slot-pill:focus-visible, .date-pill:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+main:focus { outline: none; }
+
+/* Эвристика №1: глобальное flash-уведомление */
+.flash-region { pointer-events: none; }
+.flash-region .container { pointer-events: auto; }
+.flash {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 18px; border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    box-shadow: 0 8px 24px rgba(46, 42, 39, 0.08);
+    transition: opacity .25s, transform .25s;
+}
+.flash--success { border-left-color: var(--success); background: var(--success-soft); }
+.flash--warn    { border-left-color: var(--accent); }
+.flash--danger  { border-left-color: var(--danger); background: var(--danger-soft); }
+.flash--hidden  { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+.flash__icon {
+    flex: 0 0 28px; width: 28px; height: 28px;
+    border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center;
+    background: var(--paper); color: var(--accent);
+    font-weight: 700; font-size: 0.95rem;
+}
+.flash--success .flash__icon { color: var(--success); }
+.flash--danger  .flash__icon { color: var(--danger); }
+.flash__text { flex: 1; line-height: 1.5; color: var(--text); font-size: 0.95rem; }
+.flash__close {
+    background: none; border: 0; cursor: pointer;
+    color: var(--text-muted); font-size: 1.4rem; line-height: 1;
+    padding: 0 4px;
+}
+.flash__close:hover { color: var(--text); }
+
+/* Эвристика №6: хлебные крошки — пользователь видит, где находится */
+.breadcrumbs {
+    display: flex; flex-wrap: wrap; gap: 6px 10px;
+    list-style: none; padding: 0; margin: 0 0 18px;
+    font-family: var(--mono); font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-muted);
+}
+.breadcrumbs li { display: flex; align-items: center; gap: 10px; }
+.breadcrumbs li + li::before {
+    content: '›'; color: var(--brass); font-family: var(--serif);
+    font-size: 1rem; line-height: 1;
+}
+.breadcrumbs a { color: var(--text-muted); }
+.breadcrumbs a:hover { color: var(--accent); text-decoration: none; }
+.breadcrumbs li[aria-current="page"] { color: var(--text); font-weight: 600; }
+
+/* Эвристика №4: одинаковый стиль активного nav-элемента */
+.site-nav a[aria-current="page"] {
+    color: var(--accent); border-bottom-color: var(--accent);
+}
+.site-nav a.cta[aria-current="page"] {
+    box-shadow: 0 0 0 2px var(--accent-soft), 0 1px 0 rgba(46, 35, 25, 0.08), inset 0 -2px 0 rgba(46, 35, 25, 0.12);
+}
+
+/* Подсказки/help-tip рядом с полями */
+.help-tip {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-left: 8px; font-size: 0.78rem; color: var(--text-faint);
+    font-family: var(--sans); font-weight: 400; letter-spacing: 0;
+    text-transform: none;
+}
+.help-tip::before {
+    content: 'i'; display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--sage-soft); color: var(--sage);
+    font-style: italic; font-weight: 700; font-size: 0.7rem;
+}
+
+/* Обязательные поля помечены звёздочкой (Эвристика №5) */
+.field label .required,
+label .required { color: var(--danger); margin-left: 4px; }
+
+/* Visually-hidden для текста только для скринридеров */
+.sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
+}

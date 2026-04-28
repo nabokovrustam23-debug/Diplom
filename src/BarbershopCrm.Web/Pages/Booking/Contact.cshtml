@@ -67,25 +67,32 @@
             }
 
             <div class="field">
-                <label asp-for="Input.LastName">Фамилия</label>
-                <input asp-for="Input.LastName" autocomplete="family-name" />
+                <label asp-for="Input.LastName">Фамилия<span class="required" aria-hidden="true">*</span></label>
+                <input asp-for="Input.LastName" autocomplete="family-name" required aria-required="true" />
                 <span asp-validation-for="Input.LastName" class="text-danger"></span>
             </div>
 
             <div class="field">
-                <label asp-for="Input.FirstName">Имя</label>
-                <input asp-for="Input.FirstName" autocomplete="given-name" />
+                <label asp-for="Input.FirstName">Имя<span class="required" aria-hidden="true">*</span></label>
+                <input asp-for="Input.FirstName" autocomplete="given-name" required aria-required="true" />
                 <span asp-validation-for="Input.FirstName" class="text-danger"></span>
             </div>
 
             <div class="field">
-                <label asp-for="Input.Phone">Телефон</label>
-                <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00" />
+                <label asp-for="Input.Phone">
+                    Телефон<span class="required" aria-hidden="true">*</span>
+                    <span class="help-tip">формат +7 (XXX) XXX-XX-XX</span>
+                </label>
+                <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00"
+                       required aria-required="true" inputmode="tel" />
                 <span asp-validation-for="Input.Phone" class="text-danger"></span>
             </div>
 
             <div class="field">
-                <label asp-for="Input.Email">E-mail (необязательно)</label>
+                <label asp-for="Input.Email">
+                    E-mail
+                    <span class="help-tip">пришлём напоминание за день</span>
+                </label>
                 <input asp-for="Input.Email" type="email" autocomplete="email" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
@@ -115,9 +122,12 @@
             @{ var tokenName = BarbershopCrm.Web.Common.SimpleCaptcha.TokenField; }
             @{ var honeypotName = BarbershopCrm.Web.Common.SimpleCaptcha.HoneypotField; }
             <div class="field">
-                <label for="captcha-answer">@Model.CaptchaQuestion</label>
+                <label for="captcha-answer">
+                    @Model.CaptchaQuestion<span class="required" aria-hidden="true">*</span>
+                    <span class="help-tip">защита от ботов — введите ответ цифрами</span>
+                </label>
                 <input id="captcha-answer" type="text" name="@captchaName" inputmode="numeric"
-                       autocomplete="off" maxlength="3" required
+                       autocomplete="off" maxlength="3" required aria-required="true"
                        value="" />
                 <input type="hidden" name="@tokenName" value="@Model.CaptchaToken" />
                 <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
@@ -148,6 +158,10 @@
                    asp-route-serviceId="@Model.ServiceId"
                    asp-route-masterId="@Model.MasterId">← Другое время</a>
             </div>
+            <p class="text-faint mt-2" style="font-size:.82rem;">
+                <span class="required" aria-hidden="true">*</span> — обязательные поля. Записаться можно без регистрации.
+                Подробности — в <a asp-page="/Faq">часто задаваемых вопросах</a>.
+            </p>
         </div>
     </form>
 </div>

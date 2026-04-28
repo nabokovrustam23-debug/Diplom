@@ -2,6 +2,12 @@
 @using BarbershopCrm.Infrastructure.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@{
+    var routePage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    string Aria(string prefix) => routePage.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? "page" : null!;
+    var flash = TempData["Flash"] as string;
+    var flashKind = TempData["FlashKind"] as string ?? "success";
+}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -13,24 +19,27 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 </head>
 <body>
-    <header class="site-header">
+    <a class="skip-link" href="#main-content">Перейти к содержимому</a>
+
+    <header class="site-header" role="banner">
         <div class="nav-wrap">
-            <a class="site-brand" asp-page="/Index">
-                <span class="brand-mark"></span>
+            <a class="site-brand" asp-page="/Index" aria-label="Тихий час — на главную">
+                <span class="brand-mark" aria-hidden="true"></span>
                 <span>Тихий час</span>
             </a>
-            <nav class="site-nav">
-                <a asp-page="/Index">Главная</a>
-                <a asp-page="/Booking/Index" class="cta">Записаться</a>
+            <nav class="site-nav" role="navigation" aria-label="Основная навигация">
+                <a asp-page="/Index" aria-current="@Aria("/Index")">Главная</a>
+                <a asp-page="/Faq" aria-current="@Aria("/Faq")" title="Частые вопросы">Помощь</a>
+                <a asp-page="/Booking/Index" class="cta" aria-current="@Aria("/Booking")">Записаться</a>
                 @if (SignInManager.IsSignedIn(User))
                 {
                     @if (User.IsInRole("Owner") || User.IsInRole("Admin"))
                     {
-                        <a asp-page="/Admin/Index">Админка</a>
+                        <a asp-page="/Admin/Index" aria-current="@Aria("/Admin")">Админка</a>
                     }
                     @if (User.IsInRole("Master"))
                     {
-                        <a asp-page="/Staff/Index">Кабинет мастера</a>
+                        <a asp-page="/Staff/Index" aria-current="@Aria("/Staff")">Кабинет мастера</a>
                     }
                     <a class="user-badge" asp-area="Identity" asp-page="/Account/Manage/Index" title="Личный кабинет">@(User.Identity?.Name ?? "")</a>
                     <form asp-area="Identity" asp-page="/Account/Logout"
@@ -48,13 +57,31 @@
         </div>
     </header>
 
-    <main>
+    <div class="flash-region" role="status" aria-live="polite" aria-atomic="true">
+        @if (!string.IsNullOrEmpty(flash))
+        {
+            <div class="container mt-3">
+                <div class="flash flash--@flashKind" data-flash>
+                    <span class="flash__icon" aria-hidden="true">
+                        @if (flashKind == "danger") { <text>!</text> }
+                        else if (flashKind == "warn") { <text>⚠</text> }
+                        else { <text>✓</text> }
+                    </span>
+                    <span class="flash__text">@flash</span>
+                    <button type="button" class="flash__close" aria-label="Закрыть уведомление" data-flash-close>×</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <main id="main-content" tabindex="-1" role="main">
         @RenderBody()
     </main>
 
     @await Component.InvokeAsync("Footer")
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

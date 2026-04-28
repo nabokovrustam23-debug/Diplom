@@ -201,28 +201,31 @@
                         {
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Confirmed)" />
-                                <button type="submit" class="action-link action-link--accent">Подтвердить</button>
+                                <button type="submit" class="action-link action-link--accent" title="Перевести в статус «Подтверждена»">Подтвердить</button>
                             </form>
                         }
                         @if (b.Status == BookingStatus.Confirmed)
                         {
                             <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Completed)" />
-                                <button type="submit" class="action-link action-link--success">Завершить</button>
+                                <button type="submit" class="action-link action-link--success" title="Отметить визит завершённым">Завершить</button>
                             </form>
-                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;"
+                                  data-confirm="Отметить запись № @b.BookingId.ToString("0000") как «не пришёл»? Действие будет записано в журнал.">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.NoShow)" />
-                                <button type="submit" class="action-link action-link--muted">Не пришёл</button>
+                                <button type="submit" class="action-link action-link--muted" title="Клиент не явился">Не пришёл</button>
                             </form>
                         }
                         @if (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed)
                         {
                             <a class="action-link action-link--accent"
                                asp-page="/Booking/Reschedule"
-                               asp-route-bookingId="@b.BookingId">Перенести</a>
-                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                               asp-route-bookingId="@b.BookingId"
+                               title="Перенести запись на другое время">Перенести</a>
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;"
+                                  data-confirm="Отменить запись № @b.BookingId.ToString("0000")? Клиент будет уведомлён.">
                                 <input type="hidden" name="status" value="@((int)BookingStatus.Cancelled)" />
-                                <button type="submit" class="action-link action-link--danger">Отменить</button>
+                                <button type="submit" class="action-link action-link--danger" title="Отменить запись (отменить нельзя)">Отменить</button>
                             </form>
                         }
                         @if (b.RescheduledFromUtc.HasValue)

@@ -53,10 +53,12 @@
             <div class="slot-row">
                 @foreach (var t in Model.AvailableSlots)
                 {
-                    <form method="post" style="display:inline;">
+                    <form method="post" style="display:inline;"
+                          data-confirm="Перенести запись на @Model.Date?.ToString("dd.MM") в @t.ToString("HH:mm")?">
                         <input type="hidden" name="newDate" value="@Model.Date?.ToString("yyyy-MM-dd")" />
                         <input type="hidden" name="newTime" value="@t.ToString("HH:mm")" />
-                        <button type="submit" class="slot-pill" style="border:0;cursor:pointer;font:inherit;">
+                        <button type="submit" class="slot-pill" style="border:0;cursor:pointer;font:inherit;"
+                                title="Перенести запись на @t.ToString("HH:mm")">
                             @t.ToString("HH:mm")
                         </button>
                     </form>
