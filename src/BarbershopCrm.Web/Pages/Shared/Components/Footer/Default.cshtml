@@ -1,0 +1,20 @@
+@model BarbershopCrm.Web.ViewComponents.FooterViewComponent.FooterVm
+
+<footer class="site-footer">
+    <div class="container site-footer-grid">
+        <div>
+            <div class="text-muted" style="font-size:.9rem;">© @DateTime.Now.Year · Тихий час · Сеть барбершопов</div>
+            @if (Model.Cities.Count > 0)
+            {
+                <div class="text-faint" style="font-size:.85rem;margin-top:4px;">@string.Join(" · ", Model.Cities)</div>
+            }
+        </div>
+        <nav class="site-footer-nav">
+            <a asp-page="/About">О сети</a>
+            <a asp-page="/Contacts">Контакты</a>
+            <a asp-page="/Faq">Вопросы</a>
+            <a asp-page="/Booking/Index">Запись</a>
+            <a asp-page="/Privacy">Политика ПДн</a>
+        </nav>
+    </div>
+</footer>

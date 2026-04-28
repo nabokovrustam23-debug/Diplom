@@ -1,0 +1,32 @@
+@{
+    var routeName = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+    string Active(string name) => routeName.StartsWith(name, StringComparison.OrdinalIgnoreCase) ? "is-active" : "";
+}
+
+<nav class="admin-nav mb-5">
+    <a class="@Active("/Admin/Index")" asp-page="/Admin/Index">Сводка</a>
+    <a class="@Active("/Admin/Analytics")" asp-page="/Admin/Analytics/Index">Аналитика</a>
+    <a class="@Active("/Admin/Branches")" asp-page="/Admin/Branches/Index">Филиалы</a>
+    <a class="@Active("/Admin/Services")" asp-page="/Admin/Services/Index">Услуги</a>
+    <a class="@Active("/Admin/Masters")" asp-page="/Admin/Masters/Index">Мастера</a>
+    <a class="@Active("/Admin/Bookings")" asp-page="/Admin/Bookings/Index">Записи</a>
+    <a class="@Active("/Admin/Clients")" asp-page="/Admin/Clients/Index">Клиенты</a>
+    <a class="@Active("/Admin/Schedules")" asp-page="/Admin/Schedules/Index">Расписания</a>
+    @if (User.IsInRole("Owner"))
+    {
+        <a class="@Active("/Admin/Users")" asp-page="/Admin/Users/Index">Пользователи</a>
+        <a class="@Active("/Admin/AuditLog")" asp-page="/Admin/AuditLog/Index">Журнал</a>
+    }
+</nav>
+
+<style>
+    .admin-nav {
+        display: flex; gap: 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .admin-nav a {
+        padding: 14px 20px; color: var(--text); font-size: 0.92rem; font-weight: 500;
+        border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
+    }
+    .admin-nav a:hover { color: var(--accent); }
+    .admin-nav a.is-active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+</style>

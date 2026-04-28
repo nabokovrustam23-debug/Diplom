@@ -1,0 +1,171 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.ContactModel
+@{
+    ViewData["Title"] = "Запись · Контакты";
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="5" />
+
+    <div class="eyebrow">Шаг 05</div>
+    <h2 class="mt-2 mb-1">Как с вами связаться?</h2>
+    @if (Model.Branch is not null && Model.Service is not null && Model.Master is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name
+            <span class="sep">·</span>
+            @Model.Master.Persona.LastName @Model.Master.Persona.FirstName
+            <span class="sep">·</span>
+            @Model.Start.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+        </p>
+    }
+
+    <form method="post" class="booking-contact-layout mt-4">
+        <input type="hidden" asp-for="IdempotencyKey" />
+        <div class="ticket-card" style="position:sticky;top:24px;align-self:flex-start;">
+            <div class="ticket-label">Талон визита</div>
+            <h3>@Model.Service?.Name</h3>
+            <dl>
+                <dt>Филиал</dt>
+                <dd>@Model.Branch?.Name</dd>
+                <dt>Мастер</dt>
+                <dd>@Model.Master?.Persona.LastName @Model.Master?.Persona.FirstName</dd>
+                <dt>Дата</dt>
+                <dd>@Model.Start.ToString("dd.MM.yyyy · HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))</dd>
+                <dt>Длительность</dt>
+                <dd>@Model.Service?.DurationMinutes мин</dd>
+                <dt>Стоимость</dt>
+                <dd>@Model.Service?.Price.ToString("0") ₽</dd>
+            </dl>
+            <div class="quiet-ticket-note">Можно выбрать «Прошу не разговаривать» — мастер увидит пожелание.</div>
+        </div>
+
+        <div class="col-form">
+            <div asp-validation-summary="ModelOnly" class="notice notice-danger" role="alert"
+                 style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+            @if (Model.SuggestedSlot is not null)
+            {
+                var iso = Model.SuggestedSlot.Value.Date.ToDateTime(Model.SuggestedSlot.Value.Time).ToString("yyyy-MM-ddTHH:mm");
+                <div class="notice mb-3" style="border-color:var(--accent);background:rgba(200,161,101,.1);">
+                    <a class="btn btn-primary btn-sm mt-1"
+                       asp-page="Contact"
+                       asp-route-branchId="@Model.BranchId"
+                       asp-route-serviceId="@Model.ServiceId"
+                       asp-route-masterId="@Model.MasterId"
+                       asp-route-start="@iso">
+                        Записаться на @Model.SuggestedSlot.Value.Date.ToString("dd.MM") в @Model.SuggestedSlot.Value.Time.ToString("HH:mm")
+                    </a>
+                    <a class="btn btn-outline btn-sm mt-1"
+                       asp-page="Slot"
+                       asp-route-branchId="@Model.BranchId"
+                       asp-route-serviceId="@Model.ServiceId"
+                       asp-route-masterId="@Model.MasterId">← Выбрать другое время</a>
+                </div>
+            }
+
+            <div class="field">
+                <label asp-for="Input.LastName">Фамилия<span class="required" aria-hidden="true">*</span></label>
+                <input asp-for="Input.LastName" autocomplete="family-name" required aria-required="true" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.FirstName">Имя<span class="required" aria-hidden="true">*</span></label>
+                <input asp-for="Input.FirstName" autocomplete="given-name" required aria-required="true" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Phone">
+                    Телефон<span class="required" aria-hidden="true">*</span>
+                    <span class="help-tip">формат +7 (XXX) XXX-XX-XX</span>
+                </label>
+                <input asp-for="Input.Phone" type="tel" autocomplete="tel" placeholder="+7 (999) 000-00-00"
+                       required aria-required="true" inputmode="tel" />
+                <span asp-validation-for="Input.Phone" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Email">
+                    E-mail
+                    <span class="help-tip">пришлём напоминание за день</span>
+                </label>
+                <input asp-for="Input.Email" type="email" autocomplete="email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label>Пожелания (необязательно)</label>
+                <div class="wishes-grid">
+                    @foreach (var option in BarbershopCrm.Web.Pages.Booking.ContactModel.WishOptions)
+                    {
+                        var checkedAttr = Model.Input.Wishes.Contains(option) ? "checked" : null;
+                        <label class="wish-chip @(option == "Прошу не разговаривать" ? "wish-chip--quiet" : null)">
+                            <input type="checkbox" name="Input.Wishes" value="@option" checked="@checkedAttr" />
+                            <span>@option</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Notes">Комментарий мастеру (необязательно)</label>
+                <textarea asp-for="Input.Notes" rows="2" maxlength="500"
+                          placeholder="Например: «прошлый раз делали fade на 1.5 — повторить»"></textarea>
+                <span asp-validation-for="Input.Notes" class="text-danger"></span>
+            </div>
+
+            @{ var captchaName = BarbershopCrm.Web.Common.SimpleCaptcha.AnswerField; }
+            @{ var tokenName = BarbershopCrm.Web.Common.SimpleCaptcha.TokenField; }
+            @{ var honeypotName = BarbershopCrm.Web.Common.SimpleCaptcha.HoneypotField; }
+            <div class="field">
+                <label for="captcha-answer">
+                    @Model.CaptchaQuestion<span class="required" aria-hidden="true">*</span>
+                    <span class="help-tip">защита от ботов — введите ответ цифрами</span>
+                </label>
+                <input id="captcha-answer" type="text" name="@captchaName" inputmode="numeric"
+                       autocomplete="off" maxlength="3" required aria-required="true"
+                       value="" />
+                <input type="hidden" name="@tokenName" value="@Model.CaptchaToken" />
+                <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
+            </div>
+
+            @* Honeypot: поле невидимо, но боты заполняют все поля автоматом. *@
+            <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden;">
+                <label for="@honeypotName">Не заполняйте это поле</label>
+                <input id="@honeypotName" type="text" name="@honeypotName" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="field" style="margin-top:1rem;">
+                <label class="consent-check">
+                    <input type="checkbox" asp-for="Input.ConsentGiven" value="true" />
+                    <span>
+                        Я даю согласие на обработку персональных данных в соответствии с
+                        <a asp-page="/Privacy" target="_blank" rel="noopener">Политикой</a>.
+                    </span>
+                </label>
+                <span asp-validation-for="Input.ConsentGiven" class="text-danger"></span>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Подтвердить запись</button>
+                <a class="btn btn-outline"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId">← Другое время</a>
+            </div>
+            <p class="text-faint mt-2" style="font-size:.82rem;">
+                <span class="required" aria-hidden="true">*</span> — обязательные поля. Записаться можно без регистрации.
+                Подробности — в <a asp-page="/Faq">часто задаваемых вопросах</a>.
+            </p>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

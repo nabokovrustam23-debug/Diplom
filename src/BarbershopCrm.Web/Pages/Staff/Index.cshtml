@@ -1,0 +1,135 @@
+@page
+@using BarbershopCrm.Domain.Enums
+@model BarbershopCrm.Web.Pages.Staff.IndexModel
+@{
+    ViewData["Title"] = "Кабинет мастера";
+    string StatusLabel(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "создана",
+        BookingStatus.Confirmed => "подтверждена",
+        BookingStatus.Completed => "завершена",
+        BookingStatus.Cancelled => "отменена",
+        BookingStatus.NoShow => "не пришёл",
+        _ => s.ToString()
+    };
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Рабочее место мастера</div>
+    <h2 class="mt-2 mb-2">
+        @if (Model.CurrentMaster is not null)
+        {
+            @Model.CurrentMaster.Persona.LastName @Model.CurrentMaster.Persona.FirstName
+        }
+        else
+        {
+            <span>Мои записи</span>
+        }
+    </h2>
+
+    <partial name="_StaffNav" />
+
+    @if (Model.MasterOptions.Count > 0)
+    {
+        <form method="get" class="filter-form mb-3">
+            <div class="filter-row">
+                <div class="field">
+                    <label>Мастер</label>
+                    <select name="MasterId" onchange="this.form.submit()">
+                        @foreach (var m in Model.MasterOptions)
+                        {
+                            <option value="@m.MasterId" selected="@(Model.MasterId == m.MasterId)">@m.Persona.LastName @m.Persona.FirstName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </form>
+    }
+
+    <h3 class="mt-4">Предстоящие записи <span class="text-muted">(@Model.UpcomingBookings.Count)</span></h3>
+    @if (Model.UpcomingBookings.Count == 0)
+    {
+        <div class="empty-card">Записей на ближайшее время нет.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Когда</th>
+                    <th>Клиент / телефон</th>
+                    <th>Услуга</th>
+                    <th>Филиал</th>
+                    <th>Статус</th>
+                    <th class="actions">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.UpcomingBookings)
+                {
+                    <tr>
+                        <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm") <span class="text-muted">· @b.DurationMinutes мин</span></td>
+                        <td>
+                            @b.Client.Persona.LastName @b.Client.Persona.FirstName
+                            <div class="text-muted mono" style="font-size:0.85rem;">@b.Client.Persona.Phone</div>
+                            @if (!string.IsNullOrWhiteSpace(b.Wishes))
+                            {
+                                <div class="text-muted" style="font-size:0.82rem;">@b.Wishes</div>
+                            }
+                        </td>
+                        <td>@b.Service.Name</td>
+                        <td class="text-muted">@b.Branch.Name</td>
+                        <td>@StatusLabel(b.Status)</td>
+                        <td class="actions">
+                            @if (b.Status == BookingStatus.Created)
+                            {
+                                <form method="post" asp-page-handler="SetStatus" asp-route-bookingId="@b.BookingId" asp-route-status="@((int)BookingStatus.Confirmed)" style="display:inline;">
+                                    <input type="hidden" name="MasterId" value="@Model.MasterId" />
+                                    <button type="submit" class="action-link action-link--accent">Подтвердить</button>
+                                </form>
+                            }
+                            <form method="post" asp-page-handler="SetStatus" asp-route-bookingId="@b.BookingId" asp-route-status="@((int)BookingStatus.Completed)" style="display:inline;">
+                                <input type="hidden" name="MasterId" value="@Model.MasterId" />
+                                <button type="submit" class="action-link action-link--success">Завершить</button>
+                            </form>
+                            <form method="post" asp-page-handler="SetStatus" asp-route-bookingId="@b.BookingId" asp-route-status="@((int)BookingStatus.NoShow)" style="display:inline;">
+                                <input type="hidden" name="MasterId" value="@Model.MasterId" />
+                                <button type="submit" class="action-link action-link--danger">Не пришёл</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <h3 class="mt-5">История <span class="text-muted">(последние @Model.PastBookings.Count)</span></h3>
+    @if (Model.PastBookings.Count == 0)
+    {
+        <div class="empty-card">Истории визитов пока нет.</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Когда</th>
+                    <th>Клиент</th>
+                    <th>Услуга</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.PastBookings)
+                {
+                    <tr>
+                        <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
+                        <td>@b.Client.Persona.LastName @b.Client.Persona.FirstName</td>
+                        <td>@b.Service.Name</td>
+                        <td>@StatusLabel(b.Status)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,27 @@
+@page "{code:int?}"
+@model ErrorModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-5">
+    <div class="error-page">
+        <div class="error-page__code">@Model.Code</div>
+        <h1 class="error-page__title">@Model.Title</h1>
+        <p class="error-page__message">@Model.Message</p>
+
+        @if (Model.ShowRequestId)
+        {
+            <p class="error-page__request-id">
+                <span class="text-muted">Идентификатор запроса:</span>
+                <code>@Model.RequestId</code>
+            </p>
+        }
+
+        <div class="error-page__actions">
+            <a class="btn btn-primary" asp-page="/Index">На главную</a>
+            <a class="btn btn-outline" asp-page="/Booking/Index">К записи</a>
+            <a class="btn btn-outline" asp-page="/Contacts">Связаться с нами</a>
+        </div>
+    </div>
+</div>

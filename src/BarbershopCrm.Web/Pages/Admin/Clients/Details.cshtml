@@ -1,0 +1,145 @@
+@page "{id:int}"
+@using BarbershopCrm.Domain.Enums
+@model BarbershopCrm.Web.Pages.Admin.Clients.DetailsModel
+@{
+    ViewData["Title"] = "Карточка клиента";
+    string StatusLabel(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "создана",
+        BookingStatus.Confirmed => "подтверждена",
+        BookingStatus.Completed => "завершена",
+        BookingStatus.Cancelled => "отменена",
+        BookingStatus.NoShow => "не пришёл",
+        _ => s.ToString()
+    };
+}
+
+<div class="container mt-5">
+    <a class="btn-ghost mb-3" asp-page="Index">← К списку клиентов</a>
+
+    @if (Model.Client is null)
+    {
+        <div class="notice notice-warn">Клиент не найден.</div>
+    }
+    else
+    {
+        <div class="eyebrow">Клиент</div>
+        <h2 class="mt-2 mb-3">
+            @Model.Client.Persona.LastName @Model.Client.Persona.FirstName
+            @if (Model.IsRepeat)
+            {
+                <span class="badge-repeat" style="margin-left:8px;">повторный</span>
+            }
+        </h2>
+
+        @if (!string.IsNullOrEmpty(Model.StatusMessage))
+        {
+            <div class="notice notice-success mb-3">@Model.StatusMessage</div>
+        }
+
+        <div class="branch-grid">
+            <div class="branch-panel">
+                <h3>Контакты</h3>
+                <dl class="meta-list">
+                    <dt>Телефон</dt><dd class="mono">@Model.Client.Persona.Phone</dd>
+                    <dt>E-mail</dt><dd class="mono">@(Model.Client.Persona.Email ?? "—")</dd>
+                    <dt>Источник</dt><dd>@(Model.Client.Source ?? "—")</dd>
+                    <dt>Первый визит</dt><dd class="mono">@(Model.Client.FirstVisitDate?.ToString("dd.MM.yyyy") ?? "—")</dd>
+                    <dt>В системе с</dt><dd class="mono">@Model.Client.CreatedAt.ToString("dd.MM.yyyy")</dd>
+                </dl>
+
+                <h3 class="mt-4">Сводка по визитам</h3>
+                <dl class="meta-list">
+                    <dt>Всего</dt><dd class="mono">@Model.Bookings.Count</dd>
+                    <dt>Завершено</dt><dd class="mono">@Model.CompletedCount</dd>
+                    <dt>Отменено</dt><dd class="mono">@Model.CancelledCount</dd>
+                    <dt>Не пришёл</dt><dd class="mono">@Model.NoShowCount</dd>
+                </dl>
+            </div>
+
+            <div class="branch-panel">
+                <h3>Заметки по клиенту</h3>
+                <p class="text-muted" style="font-size:0.85rem;">
+                    Видны только сотрудникам. Используйте для формулы стрижки,
+                    предпочтений и пометок «не вносить разговор», «не опаздывает»
+                    и т. п.
+                </p>
+                <form method="post" asp-page-handler="SaveNotes">
+                    <div class="field">
+                        <label asp-for="Source">Источник привлечения</label>
+                        @{
+                            var knownSource = Model.Source is not null
+                                && BarbershopCrm.Web.Pages.Admin.Clients.DetailsModel.SourceOptions.Contains(Model.Source);
+                        }
+                        <select asp-for="Source" class="form-select">
+                            <option value="">Не указан</option>
+                            @foreach (var opt in BarbershopCrm.Web.Pages.Admin.Clients.DetailsModel.SourceOptions)
+                            {
+                                <option value="@opt" selected="@(Model.Source == opt)">@opt</option>
+                            }
+                            @if (!knownSource && !string.IsNullOrWhiteSpace(Model.Source))
+                            {
+                                <option value="@Model.Source" selected="selected">@Model.Source</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Notes">Заметки</label>
+                        <textarea asp-for="Notes" rows="8" maxlength="2000"
+                                  placeholder="Например: «Фейд 1→3 по бокам, верх ножницами; кофе без сахара»"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                </form>
+            </div>
+        </div>
+
+        <h3 class="mt-5">История визитов</h3>
+        @if (Model.Bookings.Count == 0)
+        {
+            <div class="empty-card">У клиента пока нет записей.</div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Когда</th>
+                        <th>Филиал</th>
+                        <th>Услуга</th>
+                        <th>Мастер</th>
+                        <th>Статус</th>
+                        <th>Пожелания / комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.Bookings)
+                    {
+                        <tr>
+                            <td class="mono">@b.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="text-muted">@b.Branch.Name</td>
+                            <td>@b.Service.Name</td>
+                            <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
+                            <td>@StatusLabel(b.Status)</td>
+                            <td class="text-muted" style="font-size:0.85rem;">
+                                @if (!string.IsNullOrWhiteSpace(b.Wishes))
+                                {
+                                    <div>@b.Wishes.Replace(";", " · ")</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(b.Notes))
+                                {
+                                    <div>@b.Notes</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+<style>
+    .meta-list { display:grid; grid-template-columns: 140px 1fr; gap: 6px 12px; }
+    .meta-list dt { color: var(--text-muted); font-size: 0.9rem; }
+    .meta-list dd { margin: 0; }
+</style>

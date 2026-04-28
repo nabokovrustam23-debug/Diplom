@@ -1,0 +1,42 @@
+@page
+@model BarbershopCrm.Web.Pages.ContactsModel
+@{
+    ViewData["Title"] = "Контакты";
+}
+
+<section class="container mt-5">
+    <div class="eyebrow">Связь</div>
+    <h1 class="mt-2">Контакты</h1>
+    <p class="text-muted">
+        Запись — через <a asp-page="/Booking/Index">страницу онлайн-записи</a>.
+        Если нужно перенести визит, отменить или обсудить пожелания — напишите/позвоните в свой филиал.
+    </p>
+
+    <div class="grid grid-cols-2 mt-4">
+        @foreach (var b in Model.Branches)
+        {
+            <div class="card">
+                <div class="eyebrow">Филиал</div>
+                <h3 class="mt-2 mb-1">@b.Name</h3>
+                <p class="text-muted" style="font-size:.9rem;margin:0 0 8px 0;">@b.Address</p>
+                <p style="margin:0;">
+                    Часы: @b.OpeningTime.ToString(@"hh\:mm") — @b.ClosingTime.ToString(@"hh\:mm")
+                </p>
+                @if (!string.IsNullOrWhiteSpace(b.Phone))
+                {
+                    <p class="mono mt-1" style="margin:4px 0 0 0;">@b.Phone</p>
+                }
+                <a class="btn btn-outline btn-sm mt-2" asp-page="/Branches/Details" asp-route-id="@b.BranchId">Подробнее</a>
+            </div>
+        }
+    </div>
+
+    <div class="card mt-5" style="background:var(--surface-soft);">
+        <h3 class="mb-2">Администратор сети</h3>
+        <p class="text-muted" style="font-size:.95rem;">
+            По вопросам учётных записей, доступа в личный кабинет или сброса пароля —
+            пишите на e-mail <span class="mono">admin@tihiychas.ru</span>.
+            Ответ — в рабочее время филиалов.
+        </p>
+    </div>
+</section>

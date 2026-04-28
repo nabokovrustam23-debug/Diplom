@@ -1,0 +1,291 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Analytics.IndexModel
+@{
+    ViewData["Title"] = "Аналитика";
+    string Pct(double v) => v.ToString("0.0") + "%";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Аналитика сети</div>
+    <h2 class="mt-2 mb-2">Витрина показателей</h2>
+    <p class="text-muted mb-4">
+        Период: <span class="mono">@Model.EffectiveFrom.ToString("dd.MM")</span> – <span class="mono">@Model.EffectiveTo.ToString("dd.MM.yyyy")</span>.
+        Суммы и проценты пересчитываются по выбранным фильтрам.
+    </p>
+    @if (!string.IsNullOrEmpty(Model.Warning))
+    {
+        <div class="notice notice-warn mb-3">
+            <p class="mb-0">@Model.Warning</p>
+        </div>
+    }
+
+    <partial name="../_AdminNav" />
+
+    <form method="get" class="filter-form mb-4">
+        <div class="filter-row">
+            <div class="field">
+                <label>Пресет</label>
+                <select name="Period" onchange="this.form.submit()">
+                    @{ var p = Model.Period ?? "week"; }
+                    <option value="today" selected="@(p == "today")">Сегодня</option>
+                    <option value="week" selected="@(p == "week")">Эта неделя</option>
+                    <option value="month" selected="@(p == "month")">Этот месяц</option>
+                    <option value="custom" selected="@(p == "custom")">Произвольный</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>С</label>
+                <input type="date" name="From" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>По</label>
+                <input type="date" name="To" value="@Model.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>Филиал</label>
+                <select name="BranchId" onchange="this.form.submit()">
+                    <option value="0">Все филиалы</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.BranchId" selected="@(Model.BranchId == b.BranchId)">@b.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-outline btn-sm">Применить</button>
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <a class="btn btn-ghost btn-sm"
+                   asp-page="Index" asp-page-handler="Export"
+                   asp-route-period="@Model.Period"
+                   asp-route-from="@Model.From?.ToString("yyyy-MM-dd")"
+                   asp-route-to="@Model.To?.ToString("yyyy-MM-dd")"
+                   asp-route-branchId="@Model.BranchId">Экспорт в CSV</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="grid grid-cols-3 mb-4">
+        <div class="card">
+            <div class="eyebrow">Всего записей</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--accent);line-height:1.1;margin-top:8px;">@Model.FunnelTotal</div>
+            <div class="text-muted" style="font-size:.85rem;">завершено: @Model.FunnelCompleted</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Выручка</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--text);line-height:1.1;margin-top:8px;">
+                @Model.TotalRevenue.ToString("0") <span style="font-size:1.5rem;color:var(--text-faint)">₽</span>
+            </div>
+            <div class="text-muted" style="font-size:.85rem;">по завершённым визитам</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">No-show / отмены</div>
+            <div style="font-family:var(--serif);font-size:3rem;color:var(--text);line-height:1.1;margin-top:8px;">
+                @Pct(Model.NoShowRate)
+            </div>
+            <div class="text-muted" style="font-size:.85rem;">отмены — @Pct(Model.CancelRate)</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-3 mb-4">
+        <div class="card">
+            <div class="eyebrow">Новые клиенты</div>
+            <div class="mono" style="font-size:2rem;">@Model.NewClients</div>
+            <div class="text-muted" style="font-size:.85rem;">первая запись — в выбранном периоде</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Средний чек</div>
+            <div class="mono" style="font-size:2rem;">@Model.AvgCheck.ToString("0") ₽</div>
+            <div class="text-muted" style="font-size:.85rem;">по завершённым визитам</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Средняя длительность</div>
+            <div class="mono" style="font-size:2rem;">@Model.AvgDurationMinutes мин</div>
+            <div class="text-muted" style="font-size:.85rem;">завершённый визит</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 mb-5">
+        <div class="card">
+            <div class="eyebrow">Удержание</div>
+            <h4 class="mt-2 mb-2">Повторные клиенты</h4>
+            <div class="mono" style="font-size:2rem;">@Model.RepeatClients / @Model.UniqueClients</div>
+            <div class="text-muted" style="font-size:.85rem;">доля повторных — @Pct(Model.RepeatShare)</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Воронка</div>
+            <h4 class="mt-2 mb-2">Статусы записей</h4>
+            <dl class="funnel">
+                <dt>Создано</dt><dd class="mono">@Model.FunnelCreated</dd>
+                <dt>Подтверждено</dt><dd class="mono">@Model.FunnelConfirmed</dd>
+                <dt>Завершено</dt><dd class="mono">@Model.FunnelCompleted</dd>
+                <dt>Отменено</dt><dd class="mono">@Model.FunnelCancelled</dd>
+                <dt>Не пришёл</dt><dd class="mono">@Model.FunnelNoShow</dd>
+            </dl>
+        </div>
+    </div>
+
+    @if (Model.DailyPoints.Count > 0)
+    {
+        <h3 class="mt-4 mb-2">Динамика по дням</h3>
+        <div class="card mb-5">
+            @{
+                var points = Model.DailyPoints;
+                var maxBookings = Math.Max(1, points.Max(p => p.BookingsCount));
+                var maxRevenue = (double)Math.Max(1m, points.Max(p => p.Revenue));
+                var width = 720;
+                var height = 220;
+                var paddingX = 32;
+                var paddingY = 20;
+                var innerW = width - paddingX * 2;
+                var innerH = height - paddingY * 2;
+                var step = points.Count <= 1 ? 0 : innerW / (double)(points.Count - 1);
+
+                string Linear(double v, double max)
+                {
+                    if (max <= 0) return (paddingY + innerH).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+                    var y = paddingY + innerH - (innerH * v / max);
+                    return y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                var bookingsPath = string.Join(" ", points.Select((p, i) =>
+                {
+                    var x = paddingX + (points.Count <= 1 ? innerW / 2 : i * step);
+                    return (i == 0 ? "M" : "L") + x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "," + Linear(p.BookingsCount, maxBookings);
+                }));
+                var revenuePath = string.Join(" ", points.Select((p, i) =>
+                {
+                    var x = paddingX + (points.Count <= 1 ? innerW / 2 : i * step);
+                    return (i == 0 ? "M" : "L") + x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "," + Linear((double)p.Revenue, maxRevenue);
+                }));
+            }
+            @{
+                // Razor ловит `<text>` как управляющий тег, поэтому подписи оси X
+                // рендерим в виде строки и вставляем через Html.Raw.
+                var labelsSb = new System.Text.StringBuilder();
+                for (var i = 0; i < points.Count; i++)
+                {
+                    var x = paddingX + (points.Count <= 1 ? innerW / 2 : i * step);
+                    if (i == 0 || i == points.Count - 1 || points.Count <= 7 || i % Math.Max(1, points.Count / 7) == 0)
+                    {
+                        labelsSb.Append("<text x=\"")
+                            .Append(x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))
+                            .Append("\" y=\"").Append(height - 4)
+                            .Append("\" text-anchor=\"middle\" style=\"font-size:10px;fill:#7a6c58;\">")
+                            .Append(points[i].Date.ToString("dd.MM"))
+                            .Append("</text>");
+                    }
+                }
+            }
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 @width @height" width="100%" height="@(height)" role="img" aria-label="График записей и выручки по дням">
+                <rect x="0" y="0" width="@width" height="@height" fill="transparent" />
+                <line x1="@paddingX" y1="@(paddingY + innerH)" x2="@(paddingX + innerW)" y2="@(paddingY + innerH)" stroke="#d0c7ba" stroke-width="1" />
+                <path d="@bookingsPath" stroke="#b7835a" stroke-width="2" fill="none" />
+                <path d="@revenuePath" stroke="#4a6043" stroke-width="2" fill="none" stroke-dasharray="4 3" />
+                @Html.Raw(labelsSb.ToString())
+            </svg>
+            <div class="text-muted" style="font-size:.8rem;">
+                <span style="color:#b7835a;">■</span> количество записей (макс. @maxBookings) &nbsp;·&nbsp;
+                <span style="color:#4a6043;">— — —</span> выручка (макс. @maxRevenue.ToString("0") ₽)
+            </div>
+        </div>
+    }
+
+    <h3 class="mt-4 mb-2">Выручка по филиалам</h3>
+    <table class="data-table mb-5">
+        <thead>
+            <tr>
+                <th>Филиал</th>
+                <th>Всего записей</th>
+                <th>Завершено</th>
+                <th>No-show</th>
+                <th>Выручка</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.BranchRows)
+            {
+                <tr>
+                    <td>@r.Name</td>
+                    <td class="mono">@r.Total</td>
+                    <td class="mono">@r.Completed</td>
+                    <td class="mono">@r.NoShow</td>
+                    <td class="mono">@r.Revenue.ToString("0") ₽</td>
+                </tr>
+            }
+            @if (Model.BranchRows.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted">Нет данных за выбранный период.</td></tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 class="mt-4 mb-2">Загрузка мастеров</h3>
+    <p class="text-muted" style="font-size:.85rem;">
+        Загрузка = занятое время (подтверждённые и завершённые записи) / рабочее время по расписанию.
+    </p>
+    <table class="data-table mb-5">
+        <thead>
+            <tr>
+                <th>Мастер</th>
+                <th>Филиал</th>
+                <th>Завершено</th>
+                <th>Выручка</th>
+                <th>Занято, мин</th>
+                <th>Рабочее время, мин</th>
+                <th>Загрузка</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.MasterRows)
+            {
+                <tr>
+                    <td>@r.FullName</td>
+                    <td class="text-muted">@r.BranchName</td>
+                    <td class="mono">@r.Completed</td>
+                    <td class="mono">@r.Revenue.ToString("0") ₽</td>
+                    <td class="mono">@r.BookedMinutes</td>
+                    <td class="mono">@r.WorkingMinutes</td>
+                    <td class="mono">@Pct(r.UtilizationPercent)</td>
+                </tr>
+            }
+            @if (Model.MasterRows.Count == 0)
+            {
+                <tr><td colspan="7" class="text-muted">Нет данных за выбранный период.</td></tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 class="mt-4 mb-2">Топ услуг по выручке</h3>
+    <table class="data-table mb-5">
+        <thead>
+            <tr>
+                <th>Услуга</th>
+                <th>Завершено</th>
+                <th>Выручка</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.ServiceRows)
+            {
+                <tr>
+                    <td>@r.Name</td>
+                    <td class="mono">@r.Completed</td>
+                    <td class="mono">@r.Revenue.ToString("0") ₽</td>
+                </tr>
+            }
+            @if (Model.ServiceRows.Count == 0)
+            {
+                <tr><td colspan="3" class="text-muted">Нет завершённых визитов за выбранный период.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .funnel { display:grid; grid-template-columns:auto 1fr; column-gap:16px; row-gap:4px; margin:0; }
+    .funnel dt { color: var(--text-muted); }
+    .funnel dd { margin:0; text-align:right; }
+</style>

@@ -1,0 +1,67 @@
+@page "{bookingId:int}"
+@model BarbershopCrm.Web.Pages.Booking.ReviewModel
+@{
+    ViewData["Title"] = "Отзыв о визите";
+}
+
+<div class="container mt-5" style="max-width:640px;">
+    <h1 class="mb-2">Оцените визит</h1>
+    @if (Model.Booking is not null)
+    {
+        <p class="text-muted">
+            @Model.Booking.Service?.Name ·
+            @Model.Booking.Master?.Persona.LastName @Model.Booking.Master?.Persona.FirstName ·
+            @Model.Booking.StartDateTime.ToString("dd.MM.yyyy")
+        </p>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="notice notice-success" role="alert">@Model.StatusMessage</div>
+    }
+
+    @if (Model.AlreadyReviewed)
+    {
+        <div class="notice" role="status">
+            Спасибо! Вы уже оставили отзыв об этом визите.
+        </div>
+        <p><a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Manage/Index">← В кабинет</a></p>
+    }
+    else
+    {
+        <form method="post">
+            <div asp-validation-summary="All" class="notice notice-danger"
+                 style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+
+            <div class="field">
+                <label>Оценка</label>
+                <div class="rating-input" role="radiogroup" aria-label="Оценка от 1 до 5">
+                    @for (int i = 5; i >= 1; i--)
+                    {
+                        var id = $"r{i}";
+                        var sel = Model.Input.Rating == i ? "checked" : null;
+                        <input id="@id" type="radio" name="Input.Rating" value="@i" checked="@sel" />
+                        <label for="@id" title="@i из 5">★</label>
+                    }
+                </div>
+                <span asp-validation-for="Input.Rating" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Comment">Комментарий (необязательно)</label>
+                <textarea asp-for="Input.Comment" rows="4" maxlength="2000"
+                          placeholder="Что понравилось или что улучшить?"></textarea>
+                <span asp-validation-for="Input.Comment" class="text-danger"></span>
+            </div>
+
+            <div class="flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                <a class="btn btn-outline" asp-area="Identity" asp-page="/Account/Manage/Index">← Отмена</a>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

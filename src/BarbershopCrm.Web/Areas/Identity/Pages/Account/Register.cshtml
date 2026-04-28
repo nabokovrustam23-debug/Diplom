@@ -1,0 +1,76 @@
+@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Регистрация";
+}
+
+<section class="container">
+    <div class="identity-shell">
+        <div class="identity-ornament">✦ ✦ ✦</div>
+        <h1>Регистрация</h1>
+        <p class="identity-sub">Создайте аккаунт, чтобы видеть историю записей и быстрее записываться повторно.</p>
+
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="@(ViewData.ModelState.IsValid ? "display:none" : "")"></div>
+
+            <div class="field">
+                <label asp-for="Input.LastName">Фамилия</label>
+                <input asp-for="Input.LastName" class="form-control" autocomplete="family-name" placeholder="Иванов" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.FirstName">Имя</label>
+                <input asp-for="Input.FirstName" class="form-control" autocomplete="given-name" placeholder="Иван" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Phone">Телефон</label>
+                <input asp-for="Input.Phone" class="form-control" autocomplete="tel" placeholder="+7 (900) 000-00-00" />
+                <span asp-validation-for="Input.Phone" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Email">E-mail</label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="you@example.ru" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Password">Пароль</label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" type="password" placeholder="Не короче 8 символов, цифра и буквы разного регистра" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.ConfirmPassword">Повторите пароль</label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" type="password" placeholder="Тот же пароль ещё раз" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="field" style="margin-top:1rem;">
+                <label class="consent-check">
+                    <input type="checkbox" asp-for="Input.ConsentGiven" value="true" />
+                    <span>
+                        Я даю согласие на обработку персональных данных в соответствии с
+                        <a asp-page="/Privacy" target="_blank" rel="noopener">Политикой</a>.
+                    </span>
+                </label>
+                <span asp-validation-for="Input.ConsentGiven" class="text-danger"></span>
+            </div>
+
+            <button id="registerSubmit" type="submit" class="btn btn-primary btn-lg btn-block w-full">Зарегистрироваться</button>
+
+            <div class="identity-footer">
+                Уже есть аккаунт?
+                <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Войти</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

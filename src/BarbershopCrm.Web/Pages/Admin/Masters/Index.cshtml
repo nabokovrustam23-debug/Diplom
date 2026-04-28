@@ -1,0 +1,71 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Masters.IndexModel
+@{
+    ViewData["Title"] = "Админка · Мастера";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Команда</div>
+    <h2 class="mt-2 mb-2">Мастера</h2>
+    <p class="text-muted mb-5">Барберы сети, их специализации и привязки к филиалам.</p>
+
+    <partial name="../_AdminNav" />
+
+    <div class="flex-between mb-3">
+        <span class="text-muted">Всего: @Model.Masters.Count</span>
+        <a class="btn btn-primary btn-sm" asp-page="Create">+ Новый мастер</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>ФИО</th>
+                <th>Должность</th>
+                <th>Телефон</th>
+                <th>Стаж</th>
+                <th>Филиалов</th>
+                <th>Услуг</th>
+                <th>Статус</th>
+                <th class="actions">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.Masters)
+            {
+                <tr>
+                    <td style="width:48px;">
+                        @if (!string.IsNullOrEmpty(m.AvatarPath))
+                        {
+                            <img src="@m.AvatarPath" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid var(--border);" />
+                        }
+                        else
+                        {
+                            <div style="width:36px;height:36px;border-radius:50%;background:var(--surface-2);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:.85rem;border:1px solid var(--border);">@m.Persona.LastName[0]@m.Persona.FirstName[0]</div>
+                        }
+                    </td>
+                    <td>@m.Persona.LastName @m.Persona.FirstName</td>
+                    <td class="text-muted">@m.Position</td>
+                    <td class="mono text-muted">@m.Persona.Phone</td>
+                    <td class="mono">с @m.HireDate.ToString("dd.MM.yyyy")</td>
+                    <td class="mono">@(Model.BranchCounts.GetValueOrDefault(m.MasterId))</td>
+                    <td class="mono">@(Model.ServiceCounts.GetValueOrDefault(m.MasterId))</td>
+                    <td>
+                        @if (m.IsActive)
+                        {
+                            <span class="badge badge-success">активен</span>
+                        }
+                        else
+                        {
+                            <span class="badge">неактивен</span>
+                        }
+                    </td>
+                    <td class="actions">
+                        <a asp-page="Edit" asp-route-id="@m.MasterId" title="Изменить мастера">Изменить</a>
+                        <a asp-page="Delete" asp-route-id="@m.MasterId" style="color:var(--danger);" title="Удалить мастера">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

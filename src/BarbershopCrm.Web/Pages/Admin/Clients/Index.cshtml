@@ -1,0 +1,139 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Clients.IndexModel
+@{
+    ViewData["Title"] = "Клиенты";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">CRM</div>
+    <h2 class="mt-2 mb-2">Клиенты</h2>
+    <p class="text-muted mb-4">
+        База клиентов сети. Поиск — по ФИО, телефону или e-mail. Отметка «повторный»
+        ставится автоматически, если у клиента ≥ 2 завершённых визитов.
+    </p>
+
+    <partial name="../_AdminNav" />
+
+    @if (!string.IsNullOrEmpty(TempData["IndexError"] as string))
+    {
+        <div class="notice notice-warn mb-3">
+            <p class="mb-0">@TempData["IndexError"]</p>
+        </div>
+    }
+
+    <form method="get" class="filter-form mb-3">
+        <div class="filter-row">
+            <div class="field" style="flex:1;">
+                <label>Поиск</label>
+                <input name="Q" value="@Model.Q" placeholder="Иванов, +7999..., mail@@..." />
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-outline btn-sm">Найти</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Q))
+            {
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <a class="btn btn-ghost btn-sm" asp-page="Index">Сбросить</a>
+                </div>
+            }
+        </div>
+    </form>
+
+    <p class="text-muted mb-2">
+        Найдено: <span class="mono">@Model.TotalRows</span>
+        @if (Model.TotalPages > 1)
+        {
+            <span> · стр. <span class="mono">@Model.PageNumber</span> из <span class="mono">@Model.TotalPages</span></span>
+        }
+    </p>
+
+    @{
+        string SortArrow(string col) =>
+            (Model.Sort ?? "name") != col
+                ? ""
+                : ((Model.Dir ?? "asc") == "asc" ? " ↑" : " ↓");
+    }
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="name" asp-route-dir="@Model.ToggleDir("name")" style="color:inherit;">ФИО@SortArrow("name")</a>
+                </th>
+                <th>Телефон</th>
+                <th>E-mail</th>
+                <th>Источник</th>
+                <th>Первый визит</th>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="visits" asp-route-dir="@Model.ToggleDir("visits")" style="color:inherit;">Визитов (всего / завершено)@SortArrow("visits")</a>
+                </th>
+                <th>
+                    <a asp-page="Index" asp-route-q="@Model.Q" asp-route-sort="lastVisit" asp-route-dir="@Model.ToggleDir("lastVisit")" style="color:inherit;">Последний@SortArrow("lastVisit")</a>
+                </th>
+                <th class="actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>
+                        @r.FullName
+                        @if (r.IsRepeat)
+                        {
+                            <span class="badge-repeat">повторный</span>
+                        }
+                    </td>
+                    <td class="mono">@r.Phone</td>
+                    <td class="mono text-muted">@(r.Email ?? "—")</td>
+                    <td class="text-muted">@(r.Source ?? "—")</td>
+                    <td class="mono">@(r.FirstVisit?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="mono">@r.TotalVisits / @r.CompletedVisits</td>
+                    <td class="mono text-muted">@(r.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="actions">
+                        <a class="action-link action-link--accent" asp-page="Details" asp-route-id="@r.ClientId">Карточка →</a>
+                    </td>
+                </tr>
+            }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-muted" style="text-align:center;padding:24px;">
+                        @if (string.IsNullOrWhiteSpace(Model.Q))
+                        {
+                            <span>Клиенты появятся здесь после первых записей.</span>
+                        }
+                        else
+                        {
+                            <span>По запросу «<b>@Model.Q</b>» никого не нашли. Попробуйте только фамилию или номер без «+7».</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager mt-3" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Q="@Model.Q"
+                   asp-route-Sort="@Model.Sort"
+                   asp-route-Dir="@Model.Dir"
+                   asp-route-PageNumber="@(Model.PageNumber - 1)">← Пред.</a>
+            }
+            <span class="text-muted">Стр. @Model.PageNumber из @Model.TotalPages</span>
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Q="@Model.Q"
+                   asp-route-Sort="@Model.Sort"
+                   asp-route-Dir="@Model.Dir"
+                   asp-route-PageNumber="@(Model.PageNumber + 1)">След. →</a>
+            }
+        </nav>
+    }
+</div>

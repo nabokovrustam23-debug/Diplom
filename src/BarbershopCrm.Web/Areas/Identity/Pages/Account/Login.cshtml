@@ -1,0 +1,57 @@
+@page
+@using BarbershopCrm.Infrastructure.Identity
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Вход";
+}
+
+<section class="container">
+    <div class="identity-shell">
+        <div class="identity-ornament">✦ ✦ ✦</div>
+        <h1>Вход в кабинет</h1>
+        <p class="identity-sub">Войдите по e-mail и паролю, чтобы открыть личный кабинет.</p>
+
+        <form id="account" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="@(ViewData.ModelState.IsValid ? "display:none" : "")"></div>
+
+            <div class="field">
+                <label asp-for="Input.Email">E-mail</label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="you@example.ru" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="field">
+                <label asp-for="Input.Password">Пароль</label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" type="password" placeholder="••••••••" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input" asp-for="Input.RememberMe" />
+                <label class="form-check-label" asp-for="Input.RememberMe">Запомнить меня</label>
+            </div>
+
+            <button id="login-submit" type="submit" class="btn btn-primary btn-lg btn-block w-full">Войти</button>
+
+            <div class="identity-footer">
+                <a id="forgot-password" asp-page="./ForgotPassword">Забыли пароль?</a>
+                <span class="text-faint" style="margin: 0 8px;">·</span>
+                <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Зарегистрироваться</a>
+            </div>
+        </form>
+
+        <details class="identity-demo mt-4">
+            <summary>Демо-учётные записи (для проверяющего)</summary>
+            <div class="text-muted" style="font-size:.88rem;line-height:1.7;margin-top:8px;">
+                <div><strong>Владелец</strong> · <span class="mono">@IdentitySeeder.OwnerEmail</span> / <span class="mono">@IdentitySeeder.OwnerPassword</span></div>
+                <div><strong>Администратор</strong> · <span class="mono">@IdentitySeeder.AdminEmail</span> / <span class="mono">@IdentitySeeder.AdminPassword</span></div>
+                <div><strong>Мастер</strong> · <span class="mono">master1@tihiychas.ru</span> / <span class="mono">@IdentitySeeder.MasterPassword</span> (master1…master5)</div>
+            </div>
+        </details>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

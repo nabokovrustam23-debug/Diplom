@@ -1,0 +1,73 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.RescheduleModel
+@{
+    ViewData["Title"] = "Перенос записи";
+}
+
+<div class="container mt-5">
+    <a class="btn-ghost mb-3" asp-area="Identity" asp-page="/Account/Manage/Index">← Личный кабинет</a>
+
+    <div class="eyebrow">Перенос записи</div>
+    <h2 class="mt-2 mb-2">Выберите новое время</h2>
+
+    @if (Model.Current is not null)
+    {
+        <p class="context-line mb-4">
+            @Model.Current.Branch.Name
+            <span class="sep">·</span>
+            @Model.Current.Service.Name (@Model.Current.DurationMinutes мин)
+            <span class="sep">·</span>
+            @Model.Current.Master.Persona.LastName @Model.Current.Master.Persona.FirstName
+            <span class="sep">·</span>
+            <span class="text-muted">текущее время: @Model.Current.StartDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+        </p>
+
+        @if (!string.IsNullOrEmpty(Model.StatusMessage))
+        {
+            <div class="notice notice-warn mb-3">@Model.StatusMessage</div>
+        }
+
+        <h5 class="mb-2">Дата</h5>
+        <div class="date-row mb-5">
+            @foreach (var d in Model.AvailableDates)
+            {
+                <a class="date-pill @(Model.Date == d ? "is-active" : "")"
+                   asp-page="Reschedule"
+                   asp-route-bookingId="@Model.BookingId"
+                   asp-route-date="@d.ToString("yyyy-MM-dd")">
+                    @d.ToString("dd.MM ddd", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+                </a>
+            }
+        </div>
+
+        <h5 class="mb-2">Время</h5>
+        @if (Model.AvailableSlots.Count == 0)
+        {
+            <div class="notice notice-warn">
+                <h4>В этот день свободных окон нет.</h4>
+                <p class="mb-0 text-muted">Выберите другой день.</p>
+            </div>
+        }
+        else
+        {
+            <div class="slot-row">
+                @foreach (var t in Model.AvailableSlots)
+                {
+                    <form method="post" style="display:inline;"
+                          data-confirm="Перенести запись на @Model.Date?.ToString("dd.MM") в @t.ToString("HH:mm")?">
+                        <input type="hidden" name="newDate" value="@Model.Date?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="newTime" value="@t.ToString("HH:mm")" />
+                        <button type="submit" class="slot-pill" style="border:0;cursor:pointer;font:inherit;"
+                                title="Перенести запись на @t.ToString("HH:mm")">
+                            @t.ToString("HH:mm")
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="notice notice-warn">Запись не найдена или не может быть перенесена.</div>
+    }
+</div>

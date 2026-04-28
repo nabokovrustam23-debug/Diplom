@@ -1,0 +1,140 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.MasterModel
+@{
+    ViewData["Title"] = "Запись · Мастер";
+
+    string FormatNext((DateOnly Date, TimeOnly Time)? slot)
+    {
+        if (slot is null) return "Свободных окон нет в горизонте 14 дней";
+        var d = slot.Value.Date;
+        var t = slot.Value.Time;
+        return $"Ближайшее окно: {d:dd.MM} {GetWeekday(d)} в {t:HH:mm}";
+    }
+
+    string GetWeekday(DateOnly d) => d.DayOfWeek switch
+    {
+        DayOfWeek.Monday => "пн",
+        DayOfWeek.Tuesday => "вт",
+        DayOfWeek.Wednesday => "ср",
+        DayOfWeek.Thursday => "чт",
+        DayOfWeek.Friday => "пт",
+        DayOfWeek.Saturday => "сб",
+        _ => "вс"
+    };
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="3" />
+
+    <div class="eyebrow">Шаг 03</div>
+    <h2 class="mt-2 mb-1">К кому?</h2>
+    <p class="text-muted mb-3" style="font-size:.85rem;">
+        <span class="badge badge-warn" style="font-size:.65rem;">загружен</span>
+        — ближайшее окно &gt; 5 дней.
+        <span class="text-faint" style="margin: 0 8px;">·</span>
+        <em>«Нет окон»</em> — на горизонте 14 дней нет свободного времени для этой услуги.
+    </p>
+    @if (Model.Branch is not null && Model.Service is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name
+            <span class="sep">·</span>
+            @Model.Service.DurationMinutes мин
+            <span class="sep">·</span>
+            @Model.Service.Price.ToString("0") ₽
+        </p>
+    }
+
+    @if (Model.Masters.Count > 1)
+    {
+        <div class="master-card master-card--any">
+            <div class="position">Без предпочтений</div>
+            <div class="name">Любой мастер</div>
+            <div class="bio">Подберём первого свободного мастера на ближайший слот.</div>
+            <div class="next-slot">@FormatNext(Model.AnyMasterNextSlot)</div>
+            <a class="btn btn-primary"
+               asp-page="Slot"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="0">Выбрать →</a>
+        </div>
+    }
+
+    <div class="grid grid-cols-3">
+        @foreach (var card in Model.Masters)
+        {
+            var isBusy = card.NextSlot is null;
+            // «Загружен»: ближайшее окно дальше, чем через 5 дней. Не блокируем
+            // выбор, но подсказываем клиенту, что время ожидания значимое.
+            var isHeavilyBooked = !isBusy
+                && card.NextSlot!.Value.Date > DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(5);
+            <div class="master-card @(isBusy ? "master-card--busy" : null)">
+                @if (!string.IsNullOrEmpty(card.Master.AvatarPath))
+                {
+                    <img class="master-avatar master-avatar--photo" src="@card.Master.AvatarPath" alt="@card.Master.Persona.LastName @card.Master.Persona.FirstName" />
+                }
+                else
+                {
+                    <div class="master-avatar">
+                        @card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]
+                    </div>
+                }
+                <div class="position">@card.Master.Position</div>
+                <div class="name">
+                    @card.Master.Persona.LastName @card.Master.Persona.FirstName
+                    @if (isHeavilyBooked)
+                    {
+                        <span class="badge badge-warn" style="margin-left:6px;font-size:.65rem;">загружен</span>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
+                {
+                    <div class="bio">@card.Master.Bio</div>
+                }
+                else
+                {
+                    <div class="bio text-faint">Нет описания.</div>
+                }
+                @if (card.AvgRating is not null)
+                {
+                    <div class="master-rating" aria-label="Средняя оценка @card.AvgRating.Value.ToString("0.0") из 5">
+                        <span class="stars" aria-hidden="true">★</span>
+                        <span>@card.AvgRating.Value.ToString("0.0") · @card.ReviewsCount @(card.ReviewsCount == 1 ? "отзыв" : "отзывов")</span>
+                    </div>
+                }
+                <div class="next-slot @(isBusy ? "next-slot--busy" : null)">@FormatNext(card.NextSlot)</div>
+                @if (isBusy)
+                {
+                    <div class="flex gap-1" style="flex-direction:column;">
+                        <button class="btn btn-outline" disabled>Нет окон</button>
+                        <a class="btn btn-outline btn-sm"
+                           asp-page="Waitlist"
+                           asp-route-branchId="@Model.BranchId"
+                           asp-route-serviceId="@Model.ServiceId"
+                           asp-route-masterId="@card.Master.MasterId">В лист ожидания</a>
+                    </div>
+                }
+                else
+                {
+                    <a class="btn btn-outline"
+                       asp-page="Slot"
+                       asp-route-branchId="@Model.BranchId"
+                       asp-route-serviceId="@Model.ServiceId"
+                       asp-route-masterId="@card.Master.MasterId">Выбрать →</a>
+                }
+            </div>
+        }
+        @if (Model.Masters.Count == 0)
+        {
+            <div class="notice notice-warn" style="grid-column: 1 / -1;">
+                В этом филиале сейчас нет мастеров, оказывающих выбранную услугу.
+            </div>
+        }
+    </div>
+
+    <a class="btn-ghost mt-5"
+       asp-page="Service"
+       asp-route-branchId="@Model.BranchId">← Другая услуга</a>
+</div>

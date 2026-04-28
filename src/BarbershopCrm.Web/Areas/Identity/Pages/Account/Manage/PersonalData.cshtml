@@ -1,0 +1,47 @@
+@page
+@model PersonalDataModel
+@{
+    ViewData["Title"] = "Личные данные";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-3">Личные данные</h2>
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="notice notice-success" role="alert">@Model.StatusMessage</div>
+    }
+
+    <p class="text-muted">
+        В соответствии со ст. 14 ФЗ-152 «О персональных данных» вы можете
+        получить копию ваших данных в формате JSON или удалить аккаунт целиком.
+    </p>
+
+    <div class="grid grid-cols-2" style="gap:24px;margin-top:24px;">
+        <div class="card" style="padding:24px;">
+            <h3 style="margin-top:0;">Скачать копию данных</h3>
+            <p>JSON-файл со всеми персональными данными, записями и историей согласий.</p>
+            <form method="post" asp-page-handler="DownloadPersonalData">
+                <button type="submit" class="btn btn-primary">Скачать .json</button>
+            </form>
+        </div>
+
+        <div class="card" style="padding:24px;border-color:rgba(220,53,69,.4);">
+            <h3 style="margin-top:0;color:#b1273a;">Удалить аккаунт</h3>
+            <p>Аккаунт и личные данные будут удалены безвозвратно.
+            История посещений переходит в обезличенный архив для отчётности
+            (по 152-ФЗ хранение обезличенных данных не считается обработкой ПДн).</p>
+            <p class="text-muted" style="font-size:.85rem;">
+                Если у вас есть будущие активные записи, сначала отмените их в кабинете.
+            </p>
+            <form method="post" asp-page-handler="DeleteAccount" id="delete-form">
+                <button type="submit" class="btn btn-outline" style="border-color:#b1273a;color:#b1273a;"
+                        onclick="return confirm('Удалить аккаунт безвозвратно?');">Удалить аккаунт</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="mt-4">
+        <a class="btn-ghost" asp-page="Index">← Назад в личный кабинет</a>
+    </p>
+</div>

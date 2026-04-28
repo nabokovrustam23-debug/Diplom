@@ -1,0 +1,33 @@
+@page
+@model BarbershopCrm.Web.Pages.Branches.IndexModel
+@{
+    ViewData["Title"] = "Филиалы сети";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Филиалы сети</div>
+    <h2 class="mt-2 mb-2">Где нас найти</h2>
+    <p class="text-muted mb-4">Все филиалы работают по единому прайсу и стандарту обслуживания.</p>
+
+    <div class="grid grid-cols-3">
+        @foreach (var b in Model.Branches)
+        {
+            <a class="card-link" asp-page="/Branches/Details" asp-route-id="@b.BranchId">
+                <div class="card">
+                    <div class="eyebrow">@b.OpeningTime.ToString(@"hh\:mm") — @b.ClosingTime.ToString(@"hh\:mm")</div>
+                    <h4 class="mt-2 mb-1">@b.Name</h4>
+                    <p class="text-muted" style="font-size:.9rem;">@b.Address</p>
+                    @if (!string.IsNullOrWhiteSpace(b.Phone))
+                    {
+                        <p class="text-muted" style="font-size:.85rem;">@b.Phone</p>
+                    }
+                    <span class="btn btn-outline btn-sm">Открыть →</span>
+                </div>
+            </a>
+        }
+        @if (Model.Branches.Count == 0)
+        {
+            <p class="text-muted">Филиалы ещё не заведены.</p>
+        }
+    </div>
+</div>
