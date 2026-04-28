@@ -1,5 +1,6 @@
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,10 +11,16 @@ namespace BarbershopCrm.Web.Pages.Admin.Masters;
 public class EditModel : PageModel
 {
     private readonly ApplicationDbContext _db;
-    public EditModel(ApplicationDbContext db) => _db = db;
+    private readonly IWebHostEnvironment _env;
+    public EditModel(ApplicationDbContext db, IWebHostEnvironment env)
+    {
+        _db = db;
+        _env = env;
+    }
 
     [BindProperty] public CreateModel.MasterInput Input { get; set; } = new();
     public int MasterId { get; private set; }
+    public string? CurrentAvatarPath { get; private set; }
     public IList<SelectListItem> BranchOptions { get; private set; } = new List<SelectListItem>();
     public IList<SelectListItem> ServiceOptions { get; private set; } = new List<SelectListItem>();
 
@@ -27,6 +34,7 @@ public class EditModel : PageModel
         if (m is null) return RedirectToPage("Index");
 
         MasterId = id;
+        CurrentAvatarPath = m.AvatarPath;
         Input = new()
         {
             LastName = m.Persona.LastName,
@@ -87,6 +95,11 @@ public class EditModel : PageModel
             var ent = m.MasterServices.First(ms => ms.ServiceId == rm);
             _db.MasterServices.Remove(ent);
         }
+
+        // Аватар: если приложен новый файл — заменяем сохранённый ранее.
+        var newAvatar = await AvatarUpload.SaveAsync(_env, Input.AvatarFile, id, ModelState);
+        if (newAvatar is not null) m.AvatarPath = newAvatar;
+        if (!ModelState.IsValid) { CurrentAvatarPath = m.AvatarPath; await LoadOptionsAsync(); return Page(); }
 
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");

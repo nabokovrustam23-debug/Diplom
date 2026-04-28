@@ -52,14 +52,7 @@
         @RenderBody()
     </main>
 
-    <footer class="site-footer">
-        <div class="container">
-            <div>© @DateTime.Now.Year · Тихий час · Сеть барбершопов</div>
-            <div>
-                <span class="text-faint">Краснодар · Сочи</span>
-            </div>
-        </div>
-    </footer>
+    @await Component.InvokeAsync("Footer")
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)

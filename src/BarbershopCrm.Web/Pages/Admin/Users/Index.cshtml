@@ -17,6 +17,15 @@
         <div class="notice notice-success mb-3">@Model.StatusMessage</div>
     }
 
+    @if (!string.IsNullOrEmpty(Model.ResetPasswordValue))
+    {
+        <div class="notice notice-warn mb-3">
+            <strong>Временный пароль для @Model.ResetPasswordEmail:</strong>
+            <code class="mono" style="font-size:1.05rem;background:#fff3d6;padding:2px 8px;border-radius:6px;margin:0 6px;">@Model.ResetPasswordValue</code>
+            <span class="text-muted" style="font-size:.85rem;">Скопируйте сейчас — после обновления страницы пароль больше не отобразится.</span>
+        </div>
+    }
+
     <form method="get" class="filter-form mb-3">
         <div class="filter-row">
             <div class="field">
@@ -57,6 +66,7 @@
                 <th>Телефон</th>
                 <th>Роль</th>
                 <th class="actions">Сменить роль</th>
+                <th class="actions">Пароль</th>
             </tr>
         </thead>
         <tbody>
@@ -75,7 +85,14 @@
                                     <option value="@r" selected="@(u.RoleCode == r)">@BarbershopCrm.Web.Pages.Admin.Users.IndexModel.RoleLabel(r)</option>
                                 }
                             </select>
-                            <button type="submit" class="btn btn-outline btn-sm">Сохранить</button>
+                            <button type="submit" class="btn btn-outline btn-sm" title="Применить роль">Сохранить</button>
+                        </form>
+                    </td>
+                    <td class="actions">
+                        <form method="post" asp-page-handler="ResetPassword" asp-route-userId="@u.UserId"
+                              onsubmit="return confirm('Сбросить пароль для @u.Email? Будет сгенерирован временный пароль.');"
+                              style="display:inline;">
+                            <button type="submit" class="btn btn-ghost btn-sm" title="Сгенерировать временный пароль">Сбросить</button>
                         </form>
                     </td>
                 </tr>

@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,7 +14,12 @@ namespace BarbershopCrm.Web.Pages.Admin.Masters;
 public class CreateModel : PageModel
 {
     private readonly ApplicationDbContext _db;
-    public CreateModel(ApplicationDbContext db) => _db = db;
+    private readonly IWebHostEnvironment _env;
+    public CreateModel(ApplicationDbContext db, IWebHostEnvironment env)
+    {
+        _db = db;
+        _env = env;
+    }
 
     [BindProperty] public MasterInput Input { get; set; } = new();
     public IList<SelectListItem> BranchOptions { get; private set; } = new List<SelectListItem>();
@@ -36,6 +43,9 @@ public class CreateModel : PageModel
         [Required(ErrorMessage = "Выберите филиал.")]
         public int BranchId { get; set; }
         public List<int> ServiceIds { get; set; } = new();
+
+        /// <summary>Загружаемый файл аватара (JPG/PNG, до 2 МБ).</summary>
+        public IFormFile? AvatarFile { get; set; }
     }
 
     public async Task OnGetAsync() => await LoadOptionsAsync();
@@ -77,9 +87,16 @@ public class CreateModel : PageModel
         _db.MasterBranches.Add(new MasterBranch { MasterId = master.MasterId, BranchId = Input.BranchId });
         foreach (var sid in Input.ServiceIds.Distinct())
             _db.MasterServices.Add(new MasterService { MasterId = master.MasterId, ServiceId = sid });
+
+        // Аватар (опционально): сохраняем рядом с другими статическими ресурсами
+        // и пишем относительный путь в Master.AvatarPath для публичного рендера.
+        var avatarPath = await AvatarUpload.SaveAsync(_env, Input.AvatarFile, master.MasterId, ModelState);
+        if (avatarPath is not null) master.AvatarPath = avatarPath;
+
         await _db.SaveChangesAsync();
 
-        return RedirectToPage("Index");
+        TempData["StatusMessage"] = "Мастер создан. Заполните расписание смен, иначе он не появится в публичной записи.";
+        return RedirectToPage("/Staff/Schedule", new { masterId = master.MasterId });
     }
 
     private async Task LoadOptionsAsync()

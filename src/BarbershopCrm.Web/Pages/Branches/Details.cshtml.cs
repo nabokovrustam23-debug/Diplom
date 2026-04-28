@@ -36,6 +36,14 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
+        // Если id не задан в маршруте — пробуем взять из query (?id=1) для
+        // совместимости со старыми ссылками. Иначе — отправляем на список филиалов.
+        if (Id <= 0 && int.TryParse(Request.Query["id"], out var qid) && qid > 0)
+        {
+            Id = qid;
+        }
+        if (Id <= 0) return RedirectToPage("/Booking/Index");
+
         Branch = await _db.Branches.AsNoTracking()
             .FirstOrDefaultAsync(b => b.BranchId == Id);
         if (Branch is null) return RedirectToPage("/Booking/Index");

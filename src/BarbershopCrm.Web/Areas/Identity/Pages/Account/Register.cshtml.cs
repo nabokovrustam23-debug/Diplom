@@ -87,9 +87,24 @@ public class RegisterModel : PageModel
         var phone = Input.Phone.Trim();
         var email = Input.Email.Trim();
 
+        // Если по этому телефону уже есть учётная запись — предлагаем войти,
+        // а не плодить дубль. Иначе при двух регистрациях с одинаковым телефоном
+        // мы получали бы две учётки на одну Persona, что путает аналитику.
+        var personaByPhone = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
+        if (personaByPhone is not null)
+        {
+            var existingUser = await _userManager.Users.FirstOrDefaultAsync(u => u.PersonaId == personaByPhone.PersonaId);
+            if (existingUser is not null)
+            {
+                ModelState.AddModelError(nameof(Input.Phone),
+                    $"По этому телефону уже есть учётная запись ({existingUser.Email}). Войдите или восстановите пароль.");
+                return Page();
+            }
+        }
+
         // Persona — общая сущность; ищем существующую запись по телефону, иначе
         // создаём новую. Это соответствует домен-модели «Persona-паттерна».
-        var persona = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
+        var persona = personaByPhone;
         if (persona is null)
         {
             persona = new Persona

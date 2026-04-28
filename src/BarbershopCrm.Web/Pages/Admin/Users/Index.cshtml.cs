@@ -38,6 +38,10 @@ public class IndexModel : PageModel
 
     [TempData] public string? StatusMessage { get; set; }
 
+    /// <summary>Сгенерированный временный пароль показываем один раз через TempData.</summary>
+    [TempData] public string? ResetPasswordValue { get; set; }
+    [TempData] public string? ResetPasswordEmail { get; set; }
+
     public record UserRow(
         int UserId,
         string Email,
@@ -122,6 +126,62 @@ public class IndexModel : PageModel
 
         StatusMessage = $"Роль пользователя {user.Email} обновлена на «{RoleLabel(role)}».";
         return RedirectToPage();
+    }
+
+    /// <summary>Сбросить пароль пользователя на одноразовый сгенерированный.
+    /// Реализуем через RemovePassword + AddPassword, чтобы не требовать токенов
+    /// (мы не используем Email-провайдер). Новый пароль показываем в UI один раз.</summary>
+    public async Task<IActionResult> OnPostResetPasswordAsync(int userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            StatusMessage = "Пользователь не найден.";
+            return RedirectToPage();
+        }
+
+        var newPassword = GenerateTemporaryPassword();
+        var hadPassword = await _userManager.HasPasswordAsync(user);
+        if (hadPassword)
+        {
+            var rm = await _userManager.RemovePasswordAsync(user);
+            if (!rm.Succeeded)
+            {
+                StatusMessage = "Не удалось снять старый пароль: " + string.Join("; ", rm.Errors.Select(e => e.Description));
+                return RedirectToPage();
+            }
+        }
+        var add = await _userManager.AddPasswordAsync(user, newPassword);
+        if (!add.Succeeded)
+        {
+            StatusMessage = "Не удалось установить новый пароль: " + string.Join("; ", add.Errors.Select(e => e.Description));
+            return RedirectToPage();
+        }
+
+        ResetPasswordEmail = user.Email;
+        ResetPasswordValue = newPassword;
+        StatusMessage = $"Сгенерирован временный пароль для {user.Email}. Передайте его пользователю — после первого входа порекомендуйте сменить пароль.";
+        return RedirectToPage();
+    }
+
+    /// <summary>Простой генератор пароля 12 символов: лат. буквы (без l/I/O/0) + цифры.
+    /// Достаточно для одноразовой передачи через защищённый канал.</summary>
+    private static string GenerateTemporaryPassword()
+    {
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghjkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[12];
+        rng.GetBytes(bytes);
+        var sb = new System.Text.StringBuilder(12);
+        sb.Append(upper[bytes[0] % upper.Length]);
+        sb.Append(lower[bytes[1] % lower.Length]);
+        sb.Append(digits[bytes[2] % digits.Length]);
+        sb.Append('!');
+        var pool = upper + lower + digits;
+        for (int i = 4; i < 12; i++) sb.Append(pool[bytes[i] % pool.Length]);
+        return sb.ToString();
     }
 
     public static string RoleLabel(string roleCode) => roleCode switch

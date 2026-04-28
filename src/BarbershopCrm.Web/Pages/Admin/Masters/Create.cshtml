@@ -8,7 +8,7 @@
     <div class="eyebrow">Команда / Мастера</div>
     <h2 class="mt-2 mb-5">Новый мастер</h2>
 
-    <form method="post" class="col-form" style="max-width:640px;">
+    <form method="post" class="col-form" style="max-width:640px;" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="notice notice-danger"
              style="@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
 
@@ -71,6 +71,12 @@
         <div class="field">
             <label asp-for="Input.Bio">Биография / описание</label>
             <textarea asp-for="Input.Bio" rows="3" placeholder="Опыт, специализации, любимые стрижки..."></textarea>
+        </div>
+        <div class="field">
+            <label asp-for="Input.AvatarFile">Аватар (JPG/PNG/WEBP, до 2 МБ)</label>
+            <input asp-for="Input.AvatarFile" type="file" accept="image/jpeg,image/png,image/webp" />
+            <span asp-validation-for="Input.AvatarFile" class="text-danger"></span>
+            <p class="text-muted mt-1" style="font-size:.85rem;">Можно загрузить позже из карточки мастера.</p>
         </div>
         <div class="field">
             <label style="text-transform:none;letter-spacing:0;color:var(--text);font-family:var(--sans);font-size:0.95rem;">

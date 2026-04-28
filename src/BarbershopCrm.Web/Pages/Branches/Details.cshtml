@@ -1,4 +1,4 @@
-@page "{id:int}"
+@page "{id:int?}"
 @using BarbershopCrm.Domain.Enums
 @using BarbershopCrm.Web.Shared
 @model BarbershopCrm.Web.Pages.Branches.DetailsModel
@@ -44,13 +44,23 @@
                 @foreach (var card in Model.Masters)
                 {
                     <div class="branch-master-row">
-                        <div>
-                            <div class="title">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
-                            <div class="position">@card.Master.Position</div>
-                            @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
+                        <div style="display:flex;gap:12px;align-items:flex-start;">
+                            @if (!string.IsNullOrEmpty(card.Master.AvatarPath))
                             {
-                                <div class="meta mt-1" style="font-size:0.88rem;color:var(--muted);">@card.Master.Bio</div>
+                                <img src="@card.Master.AvatarPath" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border);" />
                             }
+                            else
+                            {
+                                <div class="master-avatar" style="flex-shrink:0;">@card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]</div>
+                            }
+                            <div>
+                                <div class="title">@card.Master.Persona.LastName @card.Master.Persona.FirstName</div>
+                                <div class="position">@card.Master.Position</div>
+                                @if (!string.IsNullOrWhiteSpace(card.Master.Bio))
+                                {
+                                    <div class="meta mt-1" style="font-size:0.88rem;color:var(--muted);">@card.Master.Bio</div>
+                                }
+                            </div>
                         </div>
                         @if (card.NextSlot is not null)
                         {

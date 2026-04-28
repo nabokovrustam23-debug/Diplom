@@ -554,6 +554,7 @@ p { margin: 0 0 1em 0; }
   font-weight: 700;
   box-shadow: 0 0 0 6px rgba(138, 154, 123, 0.12);
 }
+.master-avatar--photo { object-fit: cover; padding: 0; background: var(--surface-2); }
 
 .master-card .name {
   font-family: var(--serif);
@@ -813,6 +814,10 @@ p { margin: 0 0 1em 0; }
   flex-wrap: wrap;
   gap: 16px;
 }
+.site-footer-grid { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; }
+.site-footer-nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.site-footer-nav a { color: var(--text-muted); }
+.site-footer-nav a:hover { color: var(--accent); }
 
 /* ==== Таблицы (CRUD) ==== */
 .data-table {

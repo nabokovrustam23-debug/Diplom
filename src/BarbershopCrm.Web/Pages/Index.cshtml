@@ -6,7 +6,7 @@
 
 <section class="hero">
     <div class="container">
-        <div class="hero-kicker">Краснодар · Сочи · спокойная запись</div>
+        <div class="hero-kicker">@(string.IsNullOrEmpty(Model.CitiesLine) ? "спокойная запись" : Model.CitiesLine + " · спокойная запись")</div>
         <h1>Тихий час<br/><em>без лишнего шума.</em></h1>
         <p class="lead">
             Выберите филиал, услугу и мастера — а мы соберём визит в один аккуратный талон.

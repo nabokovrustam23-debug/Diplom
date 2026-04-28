@@ -65,9 +65,16 @@
             var isHeavilyBooked = !isBusy
                 && card.NextSlot!.Value.Date > DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(5);
             <div class="master-card @(isBusy ? "master-card--busy" : null)">
-                <div class="master-avatar">
-                    @card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]
-                </div>
+                @if (!string.IsNullOrEmpty(card.Master.AvatarPath))
+                {
+                    <img class="master-avatar master-avatar--photo" src="@card.Master.AvatarPath" alt="@card.Master.Persona.LastName @card.Master.Persona.FirstName" />
+                }
+                else
+                {
+                    <div class="master-avatar">
+                        @card.Master.Persona.LastName[0]@card.Master.Persona.FirstName[0]
+                    </div>
+                }
                 <div class="position">@card.Master.Position</div>
                 <div class="name">
                     @card.Master.Persona.LastName @card.Master.Persona.FirstName
