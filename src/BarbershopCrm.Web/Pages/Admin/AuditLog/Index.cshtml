@@ -1,0 +1,102 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.AuditLog.IndexModel
+@{
+    ViewData["Title"] = "Журнал действий";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Аудит</div>
+    <h2 class="mt-2 mb-2">Журнал действий</h2>
+    <p class="text-muted mb-4">
+        Критичные действия сотрудников: создание учётных записей, смена ролей, сброс паролей,
+        переносы записей. Видит только владелец сети.
+    </p>
+
+    <partial name="../_AdminNav" />
+
+    <form method="get" class="filter-form mb-3">
+        <div class="filter-row">
+            <div class="field">
+                <label>Действие</label>
+                <select name="Action">
+                    <option value="">Все</option>
+                    @foreach (var a in new[] { "Invite", "SetRole", "ResetPassword", "Reschedule" })
+                    {
+                        <option value="@a" selected="@(Model.Action == a)">@a</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Сущность</label>
+                <select name="EntityType">
+                    <option value="">Все</option>
+                    @foreach (var e in new[] { "User", "Booking" })
+                    {
+                        <option value="@e" selected="@(Model.EntityType == e)">@e</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Применить</button>
+                <a class="btn btn-outline btn-sm" asp-page="Index">Сбросить</a>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted mb-2">
+        Найдено: <span class="mono">@Model.TotalRows</span>
+        @if (Model.TotalPages > 1)
+        {
+            <span> · стр. <span class="mono">@Model.PageNumber</span> из <span class="mono">@Model.TotalPages</span></span>
+        }
+    </p>
+
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Время (UTC)</th>
+            <th>Кто</th>
+            <th>Действие</th>
+            <th>Объект</th>
+            <th>ID</th>
+            <th>Детали</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td class="mono">@x.AtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@x.ActorEmail</td>
+                <td>@x.Action</td>
+                <td>@x.EntityType</td>
+                <td class="mono">@x.EntityId</td>
+                <td>@x.Details</td>
+            </tr>
+        }
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-muted" style="text-align:center;padding:24px;">Действий пока нет.</td></tr>
+        }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager mt-3" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Action="@Model.Action" asp-route-EntityType="@Model.EntityType"
+                   asp-route-PageNumber="@(Model.PageNumber - 1)">← Пред.</a>
+            }
+            <span class="text-muted">Стр. @Model.PageNumber из @Model.TotalPages</span>
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Action="@Model.Action" asp-route-EntityType="@Model.EntityType"
+                   asp-route-PageNumber="@(Model.PageNumber + 1)">След. →</a>
+            }
+        </nav>
+    }
+</div>

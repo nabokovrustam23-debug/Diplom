@@ -1,0 +1,18 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Выход";
+}
+
+<section class="container">
+    <div class="identity-shell">
+        <div class="identity-ornament">✦ ✦ ✦</div>
+        <h1>Вы вышли из аккаунта</h1>
+        <p class="identity-sub">Спасибо, что были с нами. Возвращайтесь, когда захотите снова в кресло.</p>
+
+        <div class="text-center mt-3">
+            <a class="btn btn-primary" asp-page="/Index" asp-area="">На главную</a>
+            <a class="btn btn-outline" asp-page="./Login" asp-area="Identity" style="margin-left:10px">Войти снова</a>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{63DEDA28-B0F0-49CE-AB4F-4D34F95D0980}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarbershopCrm.Domain", "src\BarbershopCrm.Domain\BarbershopCrm.Domain.csproj", "{F5B38342-0DF8-49FE-A2DA-263A438D96FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarbershopCrm.Infrastructure", "src\BarbershopCrm.Infrastructure\BarbershopCrm.Infrastructure.csproj", "{1DA5BEB6-B0F9-4796-9087-E476A4075E3D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarbershopCrm.Web", "src\BarbershopCrm.Web\BarbershopCrm.Web.csproj", "{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D618BA19-6FC9-417A-B398-3C74DD6AE41B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BarbershopCrm.Tests", "tests\BarbershopCrm.Tests\BarbershopCrm.Tests.csproj", "{B16443B3-8C54-43BE-B5F0-13196DA9B75D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F5B38342-0DF8-49FE-A2DA-263A438D96FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5B38342-0DF8-49FE-A2DA-263A438D96FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5B38342-0DF8-49FE-A2DA-263A438D96FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5B38342-0DF8-49FE-A2DA-263A438D96FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DA5BEB6-B0F9-4796-9087-E476A4075E3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DA5BEB6-B0F9-4796-9087-E476A4075E3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DA5BEB6-B0F9-4796-9087-E476A4075E3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DA5BEB6-B0F9-4796-9087-E476A4075E3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B16443B3-8C54-43BE-B5F0-13196DA9B75D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B16443B3-8C54-43BE-B5F0-13196DA9B75D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B16443B3-8C54-43BE-B5F0-13196DA9B75D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B16443B3-8C54-43BE-B5F0-13196DA9B75D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F5B38342-0DF8-49FE-A2DA-263A438D96FE} = {63DEDA28-B0F0-49CE-AB4F-4D34F95D0980}
+		{1DA5BEB6-B0F9-4796-9087-E476A4075E3D} = {63DEDA28-B0F0-49CE-AB4F-4D34F95D0980}
+		{87E80732-85C0-4E4D-8E1B-4D9EDB1AF744} = {63DEDA28-B0F0-49CE-AB4F-4D34F95D0980}
+		{B16443B3-8C54-43BE-B5F0-13196DA9B75D} = {D618BA19-6FC9-417A-B398-3C74DD6AE41B}
+	EndGlobalSection
+EndGlobal

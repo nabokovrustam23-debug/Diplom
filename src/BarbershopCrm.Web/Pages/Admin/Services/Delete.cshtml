@@ -1,0 +1,39 @@
+@page "{id:int}"
+@model BarbershopCrm.Web.Pages.Admin.Services.DeleteModel
+@{
+    ViewData["Title"] = "Удаление услуги";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Прайс-лист / Услуги</div>
+    <h2 class="mt-2 mb-3">Удалить услугу?</h2>
+
+    @if (Model.Service is not null)
+    {
+        <div class="card mb-4" style="max-width:480px;">
+            <h4 class="mb-1">@Model.Service.Name</h4>
+            <p class="text-muted mb-1">@Model.Service.Description</p>
+            <p class="mono mb-0 text-accent">@Model.Service.DurationMinutes мин · @Model.Service.Price.ToString("0") ₽</p>
+        </div>
+
+        @if (Model.BookingsCount > 0 || Model.MastersCount > 0)
+        {
+            <div class="notice notice-danger" style="max-width:480px;">
+                <h4>Удаление невозможно.</h4>
+                <p class="mb-0 text-muted">
+                    Связано записей: @Model.BookingsCount, мастеров: @Model.MastersCount.
+                </p>
+            </div>
+            <a class="btn btn-outline mt-3" asp-page="Index">← Назад</a>
+        }
+        else
+        {
+            <form method="post">
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-danger">Удалить безвозвратно</button>
+                    <a asp-page="Index" class="btn btn-outline">Отмена</a>
+                </div>
+            </form>
+        }
+    }
+</div>

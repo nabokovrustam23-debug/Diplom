@@ -1,0 +1,65 @@
+@page
+@model BarbershopCrm.Web.Pages.AboutModel
+@{
+    ViewData["Title"] = "О сети";
+}
+
+<section class="container mt-5">
+    <div class="eyebrow">О нас</div>
+    <h1 class="mt-2">Тихий час — сеть барбершопов</h1>
+    <p class="lead">
+        Спокойное место с уважением к клиенту: вы можете прийти на стрижку
+        и провести её в полной тишине, без обязательного small talk и громкой музыки.
+    </p>
+
+    <div class="grid grid-cols-3 mt-5">
+        <div class="card">
+            <div class="eyebrow">Команда</div>
+            <h3 class="mt-2">@Model.MasterCount мастеров</h3>
+            <p class="text-muted" style="font-size:.9rem;">
+                Барберы с опытом классической мужской стрижки, бороды и бритья.
+                Каждый мастер ведёт собственное расписание и принимает только в одном филиале.
+            </p>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Сеть</div>
+            <h3 class="mt-2">@Model.BranchCount @Model.BranchWordForm</h3>
+            <p class="text-muted" style="font-size:.9rem;">
+                Адреса, режим работы и состав мастеров каждого филиала — на странице
+                <a asp-page="/Booking/Index">записи</a>.
+            </p>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Услуги</div>
+            <h3 class="mt-2">@Model.ServiceCount позиций</h3>
+            <p class="text-muted" style="font-size:.9rem;">
+                Единый прайс-лист для всей сети: стрижка, борода, бритьё опасной бритвой,
+                детские стрижки и комбо-услуги.
+            </p>
+        </div>
+    </div>
+
+    <h2 class="mt-7 mb-3">Как мы работаем</h2>
+    <ul class="text-muted" style="line-height:1.8;">
+        <li>Запись через сайт без обязательной регистрации — нужно только имя и телефон.</li>
+        <li>Перед визитом можно отметить пожелание «тихий час» — мастер не начнёт разговор первым.</li>
+        <li>Карточка клиента ведётся внутри CRM: формула стрижки, любимый мастер, история визитов.</li>
+        <li>Перенос и отмена записи — из <a asp-area="Identity" asp-page="/Account/Manage/Index">личного кабинета</a> до начала визита.</li>
+    </ul>
+
+    <h2 class="mt-7 mb-3">Цифры сети</h2>
+    <div class="grid grid-cols-3">
+        <div class="card">
+            <div class="eyebrow">Записей выполнено</div>
+            <div style="font-family:var(--serif);font-size:2.2rem;color:var(--accent);margin-top:6px;">@Model.CompletedBookings</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Активных клиентов</div>
+            <div style="font-family:var(--serif);font-size:2.2rem;color:var(--text);margin-top:6px;">@Model.ClientCount</div>
+        </div>
+        <div class="card">
+            <div class="eyebrow">Лет на рынке</div>
+            <div style="font-family:var(--serif);font-size:2.2rem;color:var(--text);margin-top:6px;">с 2021</div>
+        </div>
+    </div>
+</section>

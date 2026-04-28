@@ -1,0 +1,132 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.SlotModel
+@{
+    ViewData["Title"] = "Запись · Дата и время";
+
+    // Переключение чипа: если он активен — снимаем, иначе добавляем.
+    string[] Toggle(string key)
+    {
+        var set = Model.Quick.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!set.Add(key)) set.Remove(key);
+        return set.ToArray();
+    }
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="4" />
+
+    <div class="eyebrow">Шаг 04</div>
+    <h2 class="mt-2 mb-1">Когда удобно?</h2>
+    @if (Model.Branch is not null && Model.Service is not null)
+    {
+        <p class="context-line">
+            @Model.Branch.Name
+            <span class="sep">·</span>
+            @Model.Service.Name (@Model.Service.DurationMinutes мин, @Model.Service.Price.ToString("0") ₽)
+            <span class="sep">·</span>
+            @if (Model.IsAnyMaster)
+            {
+                <text>Любой мастер</text>
+            }
+            else if (Model.Master is not null)
+            {
+                @($"{Model.Master.Persona.LastName} {Model.Master.Persona.FirstName}")
+            }
+        </p>
+    }
+
+    <div class="public-filter-bar mt-4">
+        <div class="public-filter-row">
+            <div class="public-filter-label">Быстрый фильтр</div>
+            <a class="chip @(Model.Quick.Length == 0 ? "is-active" : "")"
+               asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId">
+                Все слоты
+            </a>
+            @{
+                var chips = new[]
+                {
+                    ("earliest", "Самое раннее", Model.FilterEarliest),
+                    ("morning", "Утром", Model.FilterMorning),
+                    ("day", "Днём", Model.FilterDay),
+                    ("evening", "Вечером", Model.FilterEvening),
+                    ("weekend", "В выходные", Model.FilterWeekend),
+                };
+            }
+            @foreach (var (key, label, on) in chips)
+            {
+                <a class="chip @(on ? "is-active" : "")"
+                   asp-page="Slot"
+                   asp-route-branchId="@Model.BranchId"
+                   asp-route-serviceId="@Model.ServiceId"
+                   asp-route-masterId="@Model.MasterId"
+                   asp-route-quick="@Toggle(key)">
+                    @label
+                </a>
+            }
+        </div>
+    </div>
+
+    <h5 class="mt-4 mb-2">Дата</h5>
+    <div class="date-row mb-5">
+        @foreach (var date in Model.AvailableDates)
+        {
+            var isActive = Model.Date == date;
+            <a class="date-pill @(isActive ? "is-active" : "")"
+               asp-page="Slot"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-serviceId="@Model.ServiceId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-date="@date.ToString("yyyy-MM-dd")"
+               asp-route-quick="@Model.Quick">
+                @date.ToString("dd.MM ddd", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))
+            </a>
+        }
+    </div>
+
+    <h5 class="mb-2">Время</h5>
+    @if (Model.AvailableSlots.Count == 0)
+    {
+        <div class="notice notice-warn">
+            <h4>Свободных окон нет.</h4>
+            <p class="mb-0 text-muted">@(Model.EmptyHint ?? "Попробуйте другой день.")</p>
+            @if (Model.Quick.Length > 0)
+            {
+                <p class="mt-2 mb-0"><a class="btn btn-outline btn-sm"
+                   asp-page="Slot" asp-route-branchId="@Model.BranchId" asp-route-serviceId="@Model.ServiceId" asp-route-masterId="@Model.MasterId" asp-route-date="@Model.Date?.ToString("yyyy-MM-dd")">Сбросить фильтры</a></p>
+            }
+        </div>
+    }
+    else
+    {
+        @foreach (var group in new[] {
+            ("Утро", Model.SlotsMorning),
+            ("День", Model.SlotsDay),
+            ("Вечер", Model.SlotsEvening)
+        })
+        {
+            if (group.Item2.Count == 0) { continue; }
+            <div class="slot-group">
+                <div class="slot-group-title">@group.Item1</div>
+                <div class="slot-row">
+                    @foreach (var slot in group.Item2)
+                    {
+                        var startIso = (Model.Date!.Value.ToDateTime(slot.Time)).ToString("yyyy-MM-ddTHH:mm");
+                        <a class="slot-pill"
+                           asp-page="Contact"
+                           asp-route-branchId="@Model.BranchId"
+                           asp-route-serviceId="@Model.ServiceId"
+                           asp-route-masterId="@slot.MasterId"
+                           asp-route-start="@startIso">
+                            @slot.Time.ToString("HH:mm")
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    <a class="btn-ghost mt-5"
+       asp-page="Master"
+       asp-route-branchId="@Model.BranchId"
+       asp-route-serviceId="@Model.ServiceId">← Другой мастер</a>
+</div>

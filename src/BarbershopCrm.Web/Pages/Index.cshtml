@@ -1,0 +1,74 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Главная";
+}
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-kicker">@(string.IsNullOrEmpty(Model.CitiesLine) ? "спокойная запись" : Model.CitiesLine + " · спокойная запись")</div>
+        <h1>Тихий час<br/><em>без лишнего шума.</em></h1>
+        <p class="lead">
+            Выберите филиал, услугу и мастера — а мы соберём визит в один аккуратный талон.
+            Хотите тишины во время стрижки? Просто отметьте это при записи.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" asp-page="/Booking/Index">Записаться онлайн</a>
+            <span class="quiet-badge">тихий визит доступен</span>
+        </div>
+
+        <div class="hero-meta">
+            <div><span class="text-accent">@Model.Branches.Count</span>&nbsp;&nbsp;филиала</div>
+            <div><span class="text-accent">@Model.MasterCount</span>&nbsp;&nbsp;мастеров</div>
+            <div><span class="text-accent">@Model.ServiceCount</span>&nbsp;&nbsp;услуг</div>
+        </div>
+    </div>
+</section>
+
+<section class="container mt-8">
+    <div class="eyebrow text-center">Наши филиалы</div>
+    <h2 class="mt-2 mb-4 text-center">Где нас найти</h2>
+    <div class="grid grid-cols-3 feature-grid">
+        @foreach (var b in Model.Branches)
+        {
+            <a class="card-link" asp-page="/Branches/Details" asp-route-id="@b.BranchId">
+                <div class="feature-card">
+                    <div class="eyebrow">@b.OpeningTime.ToString(@"hh\:mm") — @b.ClosingTime.ToString(@"hh\:mm")</div>
+                    <h3 class="mt-2 mb-1">@b.Name</h3>
+                    <p class="text-muted" style="font-size:.9rem;">@b.Address</p>
+                    @if (!string.IsNullOrWhiteSpace(b.Phone))
+                    {
+                        <p class="text-muted" style="font-size:.85rem;">@b.Phone</p>
+                    }
+                    <span class="btn btn-outline btn-sm mt-2">Подробнее →</span>
+                </div>
+            </a>
+        }
+    </div>
+</section>
+
+<section class="container mt-8">
+    <div class="grid grid-cols-3 feature-grid">
+        <div class="feature-card">
+            <div class="eyebrow">01 / Филиал</div>
+            <h3 class="mt-2">Свой барбершоп</h3>
+            <p class="text-muted">
+                Выбирайте филиал по адресу, графику и составу мастеров. Все цены и услуги — едины для сети.
+            </p>
+        </div>
+        <div class="feature-card">
+            <div class="eyebrow">02 / Мастер</div>
+            <h3 class="mt-2">Свой барбер</h3>
+            <p class="text-muted">
+                Ваш мастер ведёт собственное расписание. Запишитесь к тому, кому доверяете стрижку и бороду.
+            </p>
+        </div>
+        <div class="feature-card feature-card--accent">
+            <div class="eyebrow">03 / Запись</div>
+            <h3 class="mt-2">Без регистрации и шума</h3>
+            <p class="text-muted">
+                Введите имя и телефон, выберите пожелания и приходите в том настроении, в котором удобно вам.
+            </p>
+        </div>
+    </div>
+</section>

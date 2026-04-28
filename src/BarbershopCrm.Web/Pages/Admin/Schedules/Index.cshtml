@@ -1,0 +1,119 @@
+@page
+@using BarbershopCrm.Web.Pages.Admin.Schedules
+@model BarbershopCrm.Web.Pages.Admin.Schedules.IndexModel
+@{
+    ViewData["Title"] = "Расписания мастеров";
+
+    (string label, string bg, string fg) CellStyle(IndexModel.CellKind k) => k switch
+    {
+        IndexModel.CellKind.Work => ("раб", "#dcefe4", "#1f5f3a"),
+        IndexModel.CellKind.DayOff => ("вых", "#eaeaea", "#444"),
+        IndexModel.CellKind.Vacation => ("отп", "#fce5b1", "#8a5a18"),
+        IndexModel.CellKind.SickLeave => ("бол", "#f6cccc", "#8a1e1e"),
+        _ => ("—", "transparent", "#b7ada0")
+    };
+    var cul = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Администрирование</div>
+    <h2 class="mt-2 mb-2">Расписания</h2>
+    <p class="text-muted mb-4">
+        Сетка «мастер × день недели» для выбранной недели и обзор исключений
+        (отпуск / больничный / выходной) на ближайшие 60 дней.
+        Детальная правка — в календаре конкретного мастера.
+    </p>
+
+    <partial name="../_AdminNav" />
+
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm"
+           asp-page="Index"
+           asp-route-weekStart="@Model.EffectiveWeekStart.AddDays(-7).ToString("yyyy-MM-dd")">← Предыдущая</a>
+        <span class="btn btn-outline btn-sm is-active" style="pointer-events:none;">
+            @Model.EffectiveWeekStart.ToString("dd.MM") – @Model.EffectiveWeekStart.AddDays(6).ToString("dd.MM.yyyy")
+        </span>
+        <a class="btn btn-outline btn-sm"
+           asp-page="Index"
+           asp-route-weekStart="@Model.EffectiveWeekStart.AddDays(7).ToString("yyyy-MM-dd")">Следующая →</a>
+        <a class="btn btn-ghost btn-sm" asp-page="Index">Сегодня</a>
+    </div>
+
+    <table class="data-table mb-5">
+        <thead>
+            <tr>
+                <th style="min-width:200px;">Мастер</th>
+                @foreach (var d in Model.WeekDays)
+                {
+                    <th style="text-align:center;">
+                        <div style="font-weight:600;">@d.ToString("ddd", cul)</div>
+                        <div class="mono text-muted" style="font-size:.8rem;">@d.ToString("dd.MM")</div>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Calendar)
+            {
+                <tr>
+                    <td>
+                        <a asp-page="/Staff/Schedule" asp-route-masterId="@row.MasterId" style="color:inherit;">@row.FullName</a>
+                        <div class="text-muted" style="font-size:.8rem;">@row.BranchName</div>
+                    </td>
+                    @foreach (var cell in row.Days)
+                    {
+                        var style = CellStyle(cell.Kind);
+                        <td style="text-align:center;background:@style.bg;color:@style.fg;min-width:78px;">
+                            @if (cell.Kind == IndexModel.CellKind.Work && !string.IsNullOrEmpty(cell.Label))
+                            {
+                                <div class="mono" style="font-size:.78rem;">@cell.Label</div>
+                            }
+                            else
+                            {
+                                <span style="font-size:.82rem;">@style.label</span>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="text-muted" style="font-size:.8rem;">
+        <span style="background:#dcefe4;color:#1f5f3a;padding:2px 6px;border-radius:3px;font-weight:600;">раб</span> — рабочая смена ·
+        <span style="background:#eaeaea;color:#444;padding:2px 6px;border-radius:3px;font-weight:600;">вых</span> — выходной ·
+        <span style="background:#fce5b1;color:#8a5a18;padding:2px 6px;border-radius:3px;font-weight:600;">отп</span> — отпуск ·
+        <span style="background:#f6cccc;color:#8a1e1e;padding:2px 6px;border-radius:3px;font-weight:600;">бол</span> — больничный
+    </p>
+
+    <h3 class="mt-5 mb-3">Исключения на 60 дней</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Мастер</th>
+                <th>Филиал</th>
+                <th>Отпуск</th>
+                <th>Больничный</th>
+                <th>Выходные</th>
+                <th>Ближайшее отсутствие</th>
+                <th class="actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Rows)
+            {
+                <tr>
+                    <td>@r.FullName</td>
+                    <td class="text-muted">@r.BranchName</td>
+                    <td class="mono">@r.VacationCount</td>
+                    <td class="mono">@r.SickCount</td>
+                    <td class="mono">@r.DayOffCount</td>
+                    <td class="mono">@(r.NextAbsence?.ToString("dd.MM.yyyy") ?? "—")</td>
+                    <td class="actions">
+                        <a class="action-link action-link--accent" asp-page="/Staff/Schedule" asp-route-masterId="@r.MasterId">Календарь →</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

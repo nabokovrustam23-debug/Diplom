@@ -1,0 +1,52 @@
+@page
+@model BarbershopCrm.Web.Pages.Booking.IndexModel
+@{
+    ViewData["Title"] = "Запись · Филиал";
+}
+
+<div class="container mt-5">
+    <partial name="_BookingSteps" model="1" />
+
+    <div class="eyebrow">Шаг 01</div>
+    <h2 class="mt-2 mb-1">Куда вы заходите?</h2>
+    <p class="text-muted mb-4">Выберите барбершоп — все они работают по единому прайсу и стандарту.</p>
+
+    @if (Model.Cities.Count > 1)
+    {
+        <div class="filter-chips mb-4">
+            <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.City) ? "is-active" : "")"
+               asp-page="Index">Все города</a>
+            @foreach (var c in Model.Cities)
+            {
+                <a class="btn btn-outline btn-sm @(string.Equals(Model.City, c, StringComparison.OrdinalIgnoreCase) ? "is-active" : "")"
+                   asp-page="Index" asp-route-City="@c">@c</a>
+            }
+        </div>
+    }
+
+    @if (Model.Branches.Count == 0)
+    {
+        <div class="notice notice-info">
+            <p class="mb-0">В выбранном городе пока нет филиалов. <a asp-page="Index">Показать все →</a></p>
+        </div>
+    }
+
+    <div class="grid grid-cols-3">
+        @foreach (var branch in Model.Branches)
+        {
+            <div class="card">
+                <div class="eyebrow">@branch.OpeningTime.ToString("HH:mm") – @branch.ClosingTime.ToString("HH:mm")</div>
+                <h4 class="mt-2 mb-2">@branch.Name</h4>
+                <p class="text-muted mb-3" style="font-size:.92rem;">@branch.Address</p>
+                @if (!string.IsNullOrWhiteSpace(branch.Phone))
+                {
+                    <p class="mono mb-3" style="font-size:.85rem;color:var(--text-faint);">@branch.Phone</p>
+                }
+                <div class="flex" style="gap:8px;flex-wrap:wrap;">
+                    <a class="btn btn-primary btn-sm" asp-page="Service" asp-route-branchId="@branch.BranchId">Выбрать →</a>
+                    <a class="btn btn-outline btn-sm" asp-page="/Branches/Details" asp-route-id="@branch.BranchId">О филиале</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>

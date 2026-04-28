@@ -1,0 +1,261 @@
+@page
+@using BarbershopCrm.Domain.Enums
+@model BarbershopCrm.Web.Pages.Admin.Bookings.IndexModel
+@{
+    ViewData["Title"] = "Админка · Записи";
+    string Badge(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "badge",
+        BookingStatus.Confirmed => "badge badge-accent",
+        BookingStatus.Completed => "badge badge-success",
+        BookingStatus.Cancelled => "badge badge-danger",
+        BookingStatus.NoShow => "badge badge-danger",
+        _ => "badge"
+    };
+    string StatusRu(BookingStatus s) => s switch
+    {
+        BookingStatus.Created => "Создана",
+        BookingStatus.Confirmed => "Подтверждена",
+        BookingStatus.Completed => "Завершена",
+        BookingStatus.Cancelled => "Отменена",
+        BookingStatus.NoShow => "Не пришёл",
+        _ => s.ToString()
+    };
+    var datePresets = new[]
+    {
+        ("today", "Сегодня"),
+        ("tomorrow", "Завтра"),
+        ("week", "Ближайшие 7 дней"),
+        ("past", "Прошедшие")
+    };
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Журнал</div>
+    <h2 class="mt-2 mb-2">Записи</h2>
+    <p class="text-muted mb-5">Последние 200 записей. Управление статусом — кнопками справа.</p>
+
+    <partial name="../_AdminNav" />
+
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "is-active" : "")"
+           asp-page="Index"
+           asp-route-dateFilter="@Model.DateFilter"
+           asp-route-branchId="@Model.BranchId"
+           asp-route-masterId="@Model.MasterId"
+           asp-route-q="@Model.Q">Все</a>
+        @foreach (var s in Enum.GetValues<BookingStatus>())
+        {
+            var isActive = Model.StatusFilter == s.ToString();
+            <a class="btn btn-outline btn-sm @(isActive ? "is-active" : "")"
+               asp-page="Index"
+               asp-route-statusFilter="@s.ToString()"
+               asp-route-dateFilter="@Model.DateFilter"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-q="@Model.Q">@StatusRu(s)</a>
+        }
+    </div>
+
+    <div class="flex gap-2 mb-3 flex-wrap">
+        <a class="btn btn-outline btn-sm @(string.IsNullOrEmpty(Model.DateFilter) && !Model.FromDate.HasValue && !Model.ToDate.HasValue ? "is-active" : "")"
+           asp-page="Index"
+           asp-route-statusFilter="@Model.StatusFilter"
+           asp-route-branchId="@Model.BranchId"
+           asp-route-masterId="@Model.MasterId"
+           asp-route-q="@Model.Q">За всё время</a>
+        @foreach (var (key, label) in datePresets)
+        {
+            var isActive = Model.DateFilter == key;
+            <a class="btn btn-outline btn-sm @(isActive ? "is-active" : "")"
+               asp-page="Index"
+               asp-route-statusFilter="@Model.StatusFilter"
+               asp-route-dateFilter="@key"
+               asp-route-branchId="@Model.BranchId"
+               asp-route-masterId="@Model.MasterId"
+               asp-route-q="@Model.Q">@label</a>
+        }
+    </div>
+
+    <form method="get" class="filter-form mb-4">
+        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+        <input type="hidden" name="DateFilter" value="" />
+
+        <div class="filter-row">
+            <div class="field">
+                <label>Период с</label>
+                <input type="date" name="FromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>по</label>
+                <input type="date" name="ToDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field">
+                <label>Филиал</label>
+                <select name="BranchId">
+                    <option value="">Все филиалы</option>
+                    @foreach (var br in Model.Branches)
+                    {
+                        var sel = Model.BranchId == br.BranchId ? "selected" : null;
+                        <option value="@br.BranchId" selected="@sel">@br.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Мастер</label>
+                <select name="MasterId">
+                    <option value="">Все мастера</option>
+                    @foreach (var m in Model.Masters)
+                    {
+                        var sel = Model.MasterId == m.MasterId ? "selected" : null;
+                        <option value="@m.MasterId" selected="@sel">@m.Persona.LastName @m.Persona.FirstName</option>
+                    }
+                </select>
+            </div>
+            <div class="field field--grow">
+                <label>Поиск (фамилия / имя / телефон)</label>
+                <input type="search" name="Q" value="@Model.Q" placeholder="Тестов, +79991111111…" />
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Применить</button>
+                <a class="btn btn-outline btn-sm" asp-page="Index">Сбросить</a>
+                <a class="btn btn-outline btn-sm"
+                   asp-page="Index"
+                   asp-page-handler="Export"
+                   asp-route-StatusFilter="@Model.StatusFilter"
+                   asp-route-DateFilter="@Model.DateFilter"
+                   asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                   asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
+                   asp-route-BranchId="@Model.BranchId"
+                   asp-route-MasterId="@Model.MasterId"
+                   asp-route-Q="@Model.Q"
+                   title="Экспорт в CSV (Excel-совместимый)">Экспорт CSV</a>
+            </div>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrEmpty(TempData["StatusMessage"] as string))
+    {
+        <div class="notice notice-success mb-3">
+            <p class="mb-0">@TempData["StatusMessage"]</p>
+        </div>
+    }
+
+    @* Форма массового завершения живёт отдельно; чекбоксы в таблице и
+       финальная кнопка привязаны к ней через атрибут form="bulk-form",
+       чтобы не ломать вложенность <form> внутри формы статусов по записи. *@
+    <form id="bulk-form" method="post" asp-page-handler="BulkComplete"></form>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:32px;">
+                    <input type="checkbox" id="bulk-check-all" title="Выбрать всё" />
+                </th>
+                <th>№</th>
+                <th>Дата и время</th>
+                <th>Клиент</th>
+                <th>Услуга</th>
+                <th>Мастер</th>
+                <th>Филиал</th>
+                <th>Статус</th>
+                <th class="actions">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Model.Bookings)
+            {
+                <tr>
+                    <td>
+                        @if (b.Status == BookingStatus.Confirmed)
+                        {
+                            <input type="checkbox" form="bulk-form" name="ids" value="@b.BookingId" class="bulk-check" />
+                        }
+                    </td>
+                    <td class="mono">@b.BookingId.ToString("0000")</td>
+                    <td class="mono">@b.StartDateTime.ToString("dd.MM HH:mm")</td>
+                    <td>
+                        <a asp-page="/Admin/Clients/Details" asp-route-id="@b.ClientId" style="color:inherit;">@b.Client.Persona.LastName @b.Client.Persona.FirstName</a>
+                        @if (Model.RepeatClients.TryGetValue(b.ClientId, out var rep) && rep)
+                        {
+                            <span class="badge-repeat" style="margin-left:4px;">повторный</span>
+                        }
+                        <br/><span class="text-faint mono" style="font-size:.8rem;">@b.Client.Persona.Phone</span>
+                    </td>
+                    <td>
+                        @b.Service.Name <span class="text-faint">·</span> <span class="mono">@b.Service.Price.ToString("0") ₽</span>
+                        @if (!string.IsNullOrEmpty(b.Wishes))
+                        {
+                            <div class="text-faint" style="font-size:.78rem;line-height:1.3;">@b.Wishes.Replace(";", " · ")</div>
+                        }
+                        @if (!string.IsNullOrEmpty(b.Notes))
+                        {
+                            <div class="text-faint" style="font-size:.78rem;font-style:italic;line-height:1.3;">«@b.Notes»</div>
+                        }
+                    </td>
+                    <td>@b.Master.Persona.LastName @b.Master.Persona.FirstName</td>
+                    <td class="text-muted">@b.Branch.Name</td>
+                    <td><span class="@Badge(b.Status)">@StatusRu(b.Status)</span></td>
+                    <td class="actions">
+                        @if (b.Status == BookingStatus.Created)
+                        {
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Confirmed)" />
+                                <button type="submit" class="action-link action-link--accent">Подтвердить</button>
+                            </form>
+                        }
+                        @if (b.Status == BookingStatus.Confirmed)
+                        {
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Completed)" />
+                                <button type="submit" class="action-link action-link--success">Завершить</button>
+                            </form>
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.NoShow)" />
+                                <button type="submit" class="action-link action-link--muted">Не пришёл</button>
+                            </form>
+                        }
+                        @if (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed)
+                        {
+                            <a class="action-link action-link--accent"
+                               asp-page="/Booking/Reschedule"
+                               asp-route-bookingId="@b.BookingId">Перенести</a>
+                            <form method="post" asp-page-handler="Status" asp-route-id="@b.BookingId" style="display:inline;">
+                                <input type="hidden" name="status" value="@((int)BookingStatus.Cancelled)" />
+                                <button type="submit" class="action-link action-link--danger">Отменить</button>
+                            </form>
+                        }
+                        @if (b.RescheduledFromUtc.HasValue)
+                        {
+                            <div class="text-faint" style="font-size:.75rem;margin-top:2px;">
+                                перенесено с @b.RescheduledFromUtc.Value.ToString("dd.MM HH:mm")
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (Model.Bookings.Count == 0)
+    {
+        <p class="text-muted mt-3">Записей по выбранным фильтрам не найдено.</p>
+    }
+
+    <div class="mt-3">
+        <button type="submit" form="bulk-form" class="btn btn-outline btn-sm"
+                onclick="return confirm('Завершить выбранные записи?');">
+            Завершить выбранные
+        </button>
+        <span class="text-muted" style="font-size:.85rem;">— работает только для подтверждённых записей.</span>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var all = document.getElementById('bulk-check-all');
+        if (!all) return;
+        all.addEventListener('change', function () {
+            document.querySelectorAll('.bulk-check').forEach(function (c) { c.checked = all.checked; });
+        });
+    })();
+</script>

@@ -1,0 +1,45 @@
+@page
+@model BarbershopCrm.Web.Pages.Admin.Branches.IndexModel
+@{
+    ViewData["Title"] = "Админка · Филиалы";
+}
+
+<div class="container mt-5">
+    <div class="eyebrow">Справочник</div>
+    <h2 class="mt-2 mb-2">Филиалы</h2>
+    <p class="text-muted mb-5">Адреса, телефоны и часы работы точек сети.</p>
+
+    <partial name="../_AdminNav" />
+
+    <div class="flex-between mb-3">
+        <span class="text-muted">Всего: @Model.Branches.Count</span>
+        <a class="btn btn-primary btn-sm" asp-page="Create">+ Новый филиал</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Адрес</th>
+                <th>Телефон</th>
+                <th>Часы</th>
+                <th class="actions">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Model.Branches)
+            {
+                <tr>
+                    <td>@b.Name</td>
+                    <td class="text-muted">@b.Address</td>
+                    <td class="mono text-muted">@b.Phone</td>
+                    <td class="mono">@b.OpeningTime.ToString("HH:mm") – @b.ClosingTime.ToString("HH:mm")</td>
+                    <td class="actions">
+                        <a asp-page="Edit" asp-route-id="@b.BranchId">Изменить</a>
+                        <a asp-page="Delete" asp-route-id="@b.BranchId" style="color:var(--danger);">Удалить</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

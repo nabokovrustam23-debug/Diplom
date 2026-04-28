@@ -1,0 +1,60 @@
+@using Microsoft.AspNetCore.Identity
+@using BarbershopCrm.Infrastructure.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Тихий час</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+    <header class="site-header">
+        <div class="nav-wrap">
+            <a class="site-brand" asp-page="/Index">
+                <span class="brand-mark"></span>
+                <span>Тихий час</span>
+            </a>
+            <nav class="site-nav">
+                <a asp-page="/Index">Главная</a>
+                <a asp-page="/Booking/Index" class="cta">Записаться</a>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    @if (User.IsInRole("Owner") || User.IsInRole("Admin"))
+                    {
+                        <a asp-page="/Admin/Index">Админка</a>
+                    }
+                    @if (User.IsInRole("Master"))
+                    {
+                        <a asp-page="/Staff/Index">Кабинет мастера</a>
+                    }
+                    <a class="user-badge" asp-area="Identity" asp-page="/Account/Manage/Index" title="Личный кабинет">@(User.Identity?.Name ?? "")</a>
+                    <form asp-area="Identity" asp-page="/Account/Logout"
+                          asp-route-returnUrl="@Url.Page("/Index")"
+                          method="post" style="display:inline">
+                        <button type="submit" class="btn btn-ghost" style="border:0;background:none;cursor:pointer;color:var(--text-muted);font-family:var(--sans);font-size:0.9rem;padding:0">Выйти</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login">Вход</a>
+                    <a asp-area="Identity" asp-page="/Account/Register">Регистрация</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    @await Component.InvokeAsync("Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
