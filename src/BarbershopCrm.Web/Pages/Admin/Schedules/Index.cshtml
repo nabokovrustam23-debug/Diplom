@@ -6,10 +6,10 @@
 
     (string label, string bg, string fg) CellStyle(IndexModel.CellKind k) => k switch
     {
-        IndexModel.CellKind.Work => ("раб", "#e8ecdb", "#3d5632"),
-        IndexModel.CellKind.DayOff => ("вых", "#efe4d2", "#7a6c58"),
-        IndexModel.CellKind.Vacation => ("отп", "#e4d3c1", "#8a5a34"),
-        IndexModel.CellKind.SickLeave => ("бол", "#e9c9c9", "#8a3434"),
+        IndexModel.CellKind.Work => ("раб", "#dcefe4", "#1f5f3a"),
+        IndexModel.CellKind.DayOff => ("вых", "#eaeaea", "#444"),
+        IndexModel.CellKind.Vacation => ("отп", "#fce5b1", "#8a5a18"),
+        IndexModel.CellKind.SickLeave => ("бол", "#f6cccc", "#8a1e1e"),
         _ => ("—", "transparent", "#b7ada0")
     };
     var cul = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
@@ -80,10 +80,10 @@
     </table>
 
     <p class="text-muted" style="font-size:.8rem;">
-        <span style="background:#e8ecdb;color:#3d5632;padding:2px 6px;border-radius:3px;">раб</span> — рабочая смена ·
-        <span style="background:#efe4d2;color:#7a6c58;padding:2px 6px;border-radius:3px;">вых</span> — выходной ·
-        <span style="background:#e4d3c1;color:#8a5a34;padding:2px 6px;border-radius:3px;">отп</span> — отпуск ·
-        <span style="background:#e9c9c9;color:#8a3434;padding:2px 6px;border-radius:3px;">бол</span> — больничный
+        <span style="background:#dcefe4;color:#1f5f3a;padding:2px 6px;border-radius:3px;font-weight:600;">раб</span> — рабочая смена ·
+        <span style="background:#eaeaea;color:#444;padding:2px 6px;border-radius:3px;font-weight:600;">вых</span> — выходной ·
+        <span style="background:#fce5b1;color:#8a5a18;padding:2px 6px;border-radius:3px;font-weight:600;">отп</span> — отпуск ·
+        <span style="background:#f6cccc;color:#8a1e1e;padding:2px 6px;border-radius:3px;font-weight:600;">бол</span> — больничный
     </p>
 
     <h3 class="mt-5 mb-3">Исключения на 60 дней</h3>

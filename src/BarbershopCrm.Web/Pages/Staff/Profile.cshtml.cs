@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -31,6 +32,14 @@ public class ProfileModel : PageModel
 
     public string FullName { get; private set; } = string.Empty;
     public string BranchName { get; private set; } = "—";
+
+    /// <summary>Сводная статистика мастера за последние 30 дней — даёт ощущение
+    /// «кабинет не пустой» и помогает мастеру видеть собственную нагрузку.</summary>
+    public int CompletedLast30 { get; private set; }
+    public int CancelledLast30 { get; private set; }
+    public int NoShowLast30 { get; private set; }
+    public int UpcomingCount { get; private set; }
+    public decimal RevenueLast30 { get; private set; }
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -80,6 +89,23 @@ public class ProfileModel : PageModel
         if (master is null) return null;
         FullName = $"{master.Persona.LastName} {master.Persona.FirstName}";
         BranchName = master.MasterBranches.FirstOrDefault()?.Branch.Name ?? "—";
+
+        var since = DateTime.UtcNow.Date.AddDays(-30);
+        var bookings = await _db.Bookings
+            .AsNoTracking()
+            .Where(b => b.MasterId == master.MasterId && b.StartDateTime >= since)
+            .Join(_db.Services, b => b.ServiceId, s => s.ServiceId, (b, s) => new { b.Status, s.Price })
+            .ToListAsync();
+        CompletedLast30 = bookings.Count(b => b.Status == BookingStatus.Completed);
+        CancelledLast30 = bookings.Count(b => b.Status == BookingStatus.Cancelled);
+        NoShowLast30 = bookings.Count(b => b.Status == BookingStatus.NoShow);
+        RevenueLast30 = bookings.Where(b => b.Status == BookingStatus.Completed).Sum(b => b.Price);
+
+        var now = DateTime.UtcNow;
+        UpcomingCount = await _db.Bookings.CountAsync(b =>
+            b.MasterId == master.MasterId
+            && b.StartDateTime >= now
+            && (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed));
         return master;
     }
 }

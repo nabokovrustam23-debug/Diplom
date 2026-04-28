@@ -13,6 +13,25 @@
 
     <partial name="_StaffNav" />
 
+    <div class="grid grid-cols-4 mb-4">
+        <div class="card kpi-card">
+            <div class="eyebrow">Завершено · 30 д.</div>
+            <div class="kpi-value">@Model.CompletedLast30</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="eyebrow">Выручка · 30 д.</div>
+            <div class="kpi-value">@Model.RevenueLast30.ToString("0") ₽</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="eyebrow">Отмен / no-show · 30 д.</div>
+            <div class="kpi-value">@Model.CancelledLast30 / @Model.NoShowLast30</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="eyebrow">Предстоит</div>
+            <div class="kpi-value">@Model.UpcomingCount</div>
+        </div>
+    </div>
+
     @if (!string.IsNullOrEmpty(Model.StatusMessage))
     {
         <div class="notice notice-success mb-3">
