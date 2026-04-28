@@ -1,7 +1,9 @@
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
 using BarbershopCrm.Infrastructure.Services;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,9 +16,34 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services
-    .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddDefaultIdentity<ApplicationUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+
+        // Политика пароля: минимум 8 символов, обязательны цифра и буква
+        // в разном регистре. Спецсимвол не требуем (часть сотрудников вводит
+        // пароль с экранной клавиатуры в админке филиала).
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+
+        // Блокировка после серии неудачных попыток входа: 5 попыток → 5 минут.
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.AllowedForNewUsers = true;
+    })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Опции политики бронирования (часы до отмены, буфер между записями и т.д.).
+builder.Services.Configure<BookingPolicyOptions>(
+    builder.Configuration.GetSection(BookingPolicyOptions.SectionName));
+
+// Заглушка отправки писем для разработки: вместо реального SMTP пишем в логи.
+// При появлении SMTP-провайдера достаточно зарегистрировать другую реализацию.
+builder.Services.AddSingleton<IEmailSender, DevEmailSender>();
 
 builder.Services.AddRazorPages(options =>
 {
@@ -35,7 +62,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminAccess", policy => policy.RequireRole("Owner", "Admin"));
     options.AddPolicy("StaffAccess", policy => policy.RequireRole("Owner", "Admin", "Master"));
 });
-builder.Services.AddScoped<ISlotService, SlotService>();
+builder.Services.AddScoped<ISlotService>(sp =>
+{
+    var db = sp.GetRequiredService<ApplicationDbContext>();
+    var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<BookingPolicyOptions>>().Value;
+    return new SlotService(db, opts.BufferMinutes);
+});
 
 var app = builder.Build();
 

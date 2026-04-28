@@ -2,6 +2,7 @@ using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -95,7 +96,7 @@ public class ScheduleModel : PageModel
             return Page();
         }
 
-        _db.WorkSchedules.Add(new WorkSchedule
+        var ws = new WorkSchedule
         {
             MasterId = masterId,
             BranchId = branchId.Value,
@@ -103,7 +104,11 @@ public class ScheduleModel : PageModel
             StartTime = start,
             EndTime = end,
             ScheduleType = scheduleType
-        });
+        };
+        _db.WorkSchedules.Add(ws);
+        AuditLogger.Log(_db, User, "AddException", "WorkSchedule",
+            $"M{masterId}/{workDate:yyyy-MM-dd}",
+            $"type={scheduleType} {start}-{end}");
         await _db.SaveChangesAsync();
 
         return RedirectToPage(new { MasterId = masterId, WeekStart = WeekStart?.ToString("yyyy-MM-dd") });

@@ -1,4 +1,5 @@
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -48,6 +49,8 @@ public class EditModel : PageModel
         s.DisplayOrder = Input.DisplayOrder;
         s.Category = Input.Category;
         s.IsActive = Input.IsActive;
+        AuditLogger.Log(_db, User, "Update", "Service", s.ServiceId.ToString(),
+            $"name={s.Name} dur={s.DurationMinutes} price={s.Price}");
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

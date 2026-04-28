@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -44,6 +45,8 @@ public class EditModel : PageModel
         b.Phone = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim();
         b.OpeningTime = Input.OpeningTime;
         b.ClosingTime = Input.ClosingTime;
+        AuditLogger.Log(_db, User, "Update", "Branch", b.BranchId.ToString(),
+            $"name={b.Name}");
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

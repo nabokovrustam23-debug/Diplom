@@ -208,6 +208,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             e.HasIndex(x => new { x.MasterId, x.StartDateTime });
             e.HasIndex(x => x.ClientId);
 
+            // Уникальный частичный индекс: на одного мастера в одно время
+            // не может быть двух активных записей (отменённые исключаем).
+            // Закрывает гонку при параллельном бронировании на уровне БД.
+            e.HasIndex(x => new { x.MasterId, x.StartDateTime })
+                .IsUnique()
+                .HasDatabaseName("UX_Bookings_MasterStart_Active")
+                .HasFilter("\"Status\" <> 3");
+
+            // Уникальный индекс по ключу идемпотентности (для не-NULL значений).
+            e.HasIndex(x => x.IdempotencyKey)
+                .IsUnique()
+                .HasDatabaseName("UX_Bookings_IdempotencyKey")
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
             e.HasOne(x => x.Client)
                 .WithMany(c => c.Bookings)
                 .HasForeignKey(x => x.ClientId)

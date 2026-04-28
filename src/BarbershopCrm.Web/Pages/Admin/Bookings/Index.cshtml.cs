@@ -4,6 +4,7 @@ using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BookingEntity = BarbershopCrm.Domain.Entities.Booking;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -112,7 +113,10 @@ public class IndexModel : PageModel
         var b = await _db.Bookings.FindAsync(id);
         if (b is not null)
         {
+            var oldStatus = b.Status;
             b.Status = status;
+            AuditLogger.Log(_db, User, "ChangeStatus", "Booking", b.BookingId.ToString(),
+                $"from={oldStatus} to={status}");
             await _db.SaveChangesAsync();
         }
         return RedirectAfterMutation();
@@ -131,10 +135,39 @@ public class IndexModel : PageModel
             var targets = await _db.Bookings
                 .Where(b => ids.Contains(b.BookingId) && b.Status == BookingStatus.Confirmed)
                 .ToListAsync();
-            foreach (var b in targets) b.Status = BookingStatus.Completed;
+            foreach (var b in targets)
+            {
+                b.Status = BookingStatus.Completed;
+                AuditLogger.Log(_db, User, "BulkComplete", "Booking", b.BookingId.ToString(), null);
+            }
             await _db.SaveChangesAsync();
             TempData["StatusMessage"] = $"Завершено записей: {targets.Count}.";
         }
+        return RedirectAfterMutation();
+    }
+
+    /// <summary>
+    /// Авто-маркировка no-show: все «Created»/«Confirmed» записи, начало
+    /// которых уже более 30 минут в прошлом, переводятся в статус NoShow.
+    /// Используется кнопкой «Закрыть смену» в журнале администратора и
+    /// заменяет ручной обход просроченных записей.
+    /// </summary>
+    public async Task<IActionResult> OnPostMarkNoShowAsync()
+    {
+        var threshold = DateTime.UtcNow.AddMinutes(-30);
+        var stale = await _db.Bookings
+            .Where(b => b.StartDateTime < threshold
+                && (b.Status == BookingStatus.Created || b.Status == BookingStatus.Confirmed))
+            .ToListAsync();
+
+        foreach (var b in stale)
+        {
+            b.Status = BookingStatus.NoShow;
+            AuditLogger.Log(_db, User, "AutoNoShow", "Booking", b.BookingId.ToString(),
+                $"start={b.StartDateTime:yyyy-MM-dd HH:mm}");
+        }
+        await _db.SaveChangesAsync();
+        TempData["StatusMessage"] = $"Помечено как no-show: {stale.Count}.";
         return RedirectAfterMutation();
     }
 

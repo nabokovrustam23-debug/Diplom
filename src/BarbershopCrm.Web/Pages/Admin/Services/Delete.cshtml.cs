@@ -1,5 +1,6 @@
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,8 @@ public class DeleteModel : PageModel
         var s = await _db.Services.FindAsync(id);
         if (s is not null)
         {
+            AuditLogger.Log(_db, User, "Delete", "Service", s.ServiceId.ToString(),
+                $"name={s.Name}");
             _db.Services.Remove(s);
             await _db.SaveChangesAsync();
         }

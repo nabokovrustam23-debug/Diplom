@@ -207,4 +207,36 @@ public class SlotServiceTests
         // Вечер 15:00–18:00: 15:00 ... 17:30 → 11 слотов. Итого 26.
         Assert.Equal(26, slots.Count);
     }
+
+    [Fact]
+    public async Task BufferBetweenBookings_BlocksAdjacentSlots()
+    {
+        await using var db = NewDb();
+        var (branchId, serviceId, masterId, date) = await SeedAsync(db, durationMinutes: 60);
+        // Существующая запись 11:00–12:00.
+        db.Bookings.Add(new BookingEntity
+        {
+            ClientId = 0,
+            MasterId = masterId,
+            ServiceId = serviceId,
+            BranchId = branchId,
+            StartDateTime = date.ToDateTime(new TimeOnly(11, 0)),
+            DurationMinutes = 60,
+            Status = BookingStatus.Confirmed,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        // Буфер 15 минут: занятость расширяется до 10:45–12:15.
+        var sut = new SlotService(db, bufferMinutes: 15);
+        var slots = await sut.GetAvailableSlotsAsync(masterId, branchId, serviceId, date);
+
+        // 12:00 должен быть исключён (новая запись 12:00–13:00 пересечётся с буфером 12:00–12:15).
+        Assert.DoesNotContain(new TimeOnly(12, 0), slots);
+        // 12:15 — допустим (12:15–13:15 не пересекает буфер).
+        Assert.Contains(new TimeOnly(12, 15), slots);
+        // 10:00 — без буфера допустим, но услуга 60 мин закончится в 11:00 и пересечёт
+        // буфер 10:45–11:00 → должно быть исключено.
+        Assert.DoesNotContain(new TimeOnly(10, 0), slots);
+    }
 }

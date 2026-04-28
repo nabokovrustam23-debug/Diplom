@@ -23,6 +23,7 @@
     }
 
     <form method="post" class="booking-contact-layout mt-4">
+        <input type="hidden" asp-for="IdempotencyKey" />
         <div class="ticket-card" style="position:sticky;top:24px;align-self:flex-start;">
             <div class="ticket-label">Талон визита</div>
             <h3>@Model.Service?.Name</h3>

@@ -1,5 +1,6 @@
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -70,7 +71,13 @@ public class EditModel : PageModel
         m.Persona.LastName = Input.LastName.Trim();
         m.Persona.FirstName = Input.FirstName.Trim();
         m.Persona.MiddleName = string.IsNullOrWhiteSpace(Input.MiddleName) ? null : Input.MiddleName.Trim();
-        m.Persona.Phone = CreateModel.NormalizePhone(Input.Phone);
+        if (!PhoneUtil.IsValid(Input.Phone))
+        {
+            ModelState.AddModelError(nameof(Input.Phone), "Некорректный номер телефона.");
+            await LoadOptionsAsync();
+            return Page();
+        }
+        m.Persona.Phone = PhoneUtil.Normalize(Input.Phone);
         m.Persona.Email = string.IsNullOrWhiteSpace(Input.Email) ? null : Input.Email.Trim();
         m.Persona.Gender = Input.Gender;
         m.Persona.BirthDate = Input.BirthDate;
@@ -101,6 +108,8 @@ public class EditModel : PageModel
         if (newAvatar is not null) m.AvatarPath = newAvatar;
         if (!ModelState.IsValid) { CurrentAvatarPath = m.AvatarPath; await LoadOptionsAsync(); return Page(); }
 
+        AuditLogger.Log(_db, User, "Update", "Master", m.MasterId.ToString(),
+            $"name={m.Persona.LastName} {m.Persona.FirstName}");
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }

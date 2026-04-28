@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -84,7 +85,14 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        var phone = Input.Phone.Trim();
+        // Нормализуем номер к каноническому виду «+7XXXXXXXXXX» — иначе
+        // одни и те же абоненты заводят дубль Persona при разных вариантах ввода.
+        if (!PhoneUtil.IsValid(Input.Phone))
+        {
+            ModelState.AddModelError(nameof(Input.Phone), "Некорректный номер телефона.");
+            return Page();
+        }
+        var phone = PhoneUtil.Normalize(Input.Phone);
         var email = Input.Email.Trim();
 
         // Если по этому телефону уже есть учётная запись — предлагаем войти,

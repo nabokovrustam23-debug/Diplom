@@ -1,5 +1,6 @@
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +32,11 @@ public class DeleteModel : PageModel
         if (deactivateOnly)
         {
             m.IsActive = false;
+            AuditLogger.Log(_db, User, "Deactivate", "Master", m.MasterId.ToString(), null);
         }
         else
         {
+            AuditLogger.Log(_db, User, "Delete", "Master", m.MasterId.ToString(), null);
             _db.Masters.Remove(m);
         }
         await _db.SaveChangesAsync();
