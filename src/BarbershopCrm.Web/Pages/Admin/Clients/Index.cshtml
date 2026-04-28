@@ -34,7 +34,13 @@
         </div>
     </form>
 
-    <p class="text-muted mb-2">Найдено: <span class="mono">@Model.Rows.Count</span></p>
+    <p class="text-muted mb-2">
+        Найдено: <span class="mono">@Model.TotalRows</span>
+        @if (Model.TotalPages > 1)
+        {
+            <span> · стр. <span class="mono">@Model.PageNumber</span> из <span class="mono">@Model.TotalPages</span></span>
+        }
+    </p>
 
     @{
         string SortArrow(string col) =>
@@ -100,4 +106,27 @@
             }
         </tbody>
     </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager mt-3" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Q="@Model.Q"
+                   asp-route-Sort="@Model.Sort"
+                   asp-route-Dir="@Model.Dir"
+                   asp-route-PageNumber="@(Model.PageNumber - 1)">← Пред.</a>
+            }
+            <span class="text-muted">Стр. @Model.PageNumber из @Model.TotalPages</span>
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-outline btn-sm"
+                   asp-route-Q="@Model.Q"
+                   asp-route-Sort="@Model.Sort"
+                   asp-route-Dir="@Model.Dir"
+                   asp-route-PageNumber="@(Model.PageNumber + 1)">След. →</a>
+            }
+        </nav>
+    }
 </div>

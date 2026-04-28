@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BookingEntity = BarbershopCrm.Domain.Entities.Booking;
@@ -146,4 +148,52 @@ public class IndexModel : PageModel
         MasterId,
         Q
     });
+
+    /// <summary>Экспорт текущей выборки записей в CSV (Excel-совместимый: BOM + ;).
+    /// Применяет те же фильтры, что и страница, чтобы выгрузка совпадала с тем,
+    /// что видит администратор.</summary>
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        await OnGetAsync();
+
+        var sb = new StringBuilder();
+        var cul = CultureInfo.InvariantCulture;
+        sb.AppendLine("Дата;Время;Филиал;Услуга;Мастер;Клиент;Телефон;Длительность мин;Цена;Статус");
+        foreach (var b in Bookings)
+        {
+            var status = b.Status switch
+            {
+                BookingStatus.Created => "создана",
+                BookingStatus.Confirmed => "подтверждена",
+                BookingStatus.Completed => "завершена",
+                BookingStatus.Cancelled => "отменена",
+                BookingStatus.NoShow => "не пришёл",
+                _ => b.Status.ToString()
+            };
+            sb.Append(b.StartDateTime.ToString("yyyy-MM-dd")).Append(';');
+            sb.Append(b.StartDateTime.ToString("HH:mm")).Append(';');
+            sb.Append(Csv(b.Branch?.Name ?? string.Empty)).Append(';');
+            sb.Append(Csv(b.Service?.Name ?? string.Empty)).Append(';');
+            sb.Append(Csv($"{b.Master?.Persona?.LastName} {b.Master?.Persona?.FirstName}".Trim())).Append(';');
+            sb.Append(Csv($"{b.Client?.Persona?.LastName} {b.Client?.Persona?.FirstName}".Trim())).Append(';');
+            sb.Append(Csv(b.Client?.Persona?.Phone ?? string.Empty)).Append(';');
+            sb.Append(b.DurationMinutes).Append(';');
+            sb.Append(b.Service?.Price.ToString(cul) ?? "0").Append(';');
+            sb.AppendLine(status);
+        }
+        var bytes = new byte[] { 0xEF, 0xBB, 0xBF }
+            .Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+        var fileName = $"bookings-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv";
+        return File(bytes, "text/csv; charset=utf-8", fileName);
+    }
+
+    /// <summary>Экранирование значения для CSV: оборачиваем в кавычки только
+    /// при наличии разделителя/кавычек/переноса; внутренние кавычки удваиваем.</summary>
+    private static string Csv(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
+        if (s.IndexOfAny(new[] { ';', '"', '\n', '\r' }) >= 0)
+            return "\"" + s.Replace("\"", "\"\"") + "\"";
+        return s;
+    }
 }

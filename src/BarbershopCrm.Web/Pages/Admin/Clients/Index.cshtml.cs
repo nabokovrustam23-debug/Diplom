@@ -32,6 +32,15 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Dir { get; set; }
 
+    /// <summary>Номер страницы (1-based). Размер страницы фиксирован 50 строк.</summary>
+    [BindProperty(SupportsGet = true)]
+    public int PageNumber { get; set; } = 1;
+
+    public const int PageSize = 50;
+
+    public int TotalRows { get; private set; }
+    public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalRows / PageSize));
+
     public IList<ClientRow> Rows { get; private set; } = new List<ClientRow>();
 
     /// <summary>Возвращает «другое» направление для кликов по колонке.</summary>
@@ -118,6 +127,13 @@ public class IndexModel : PageModel
                 : rows.OrderBy(r => r.LastVisitAt ?? DateTime.MaxValue),
             _ => desc ? rows.OrderByDescending(r => r.FullName) : rows.OrderBy(r => r.FullName),
         };
-        Rows = rows.ToList();
+
+        // Пагинация на стороне приложения: при тысячах клиентов страница
+        // отрисовывает только запрошенный кусок, остальные — по навигации.
+        var allRows = rows.ToList();
+        TotalRows = allRows.Count;
+        if (PageNumber < 1) PageNumber = 1;
+        if (PageNumber > TotalPages) PageNumber = TotalPages;
+        Rows = allRows.Skip((PageNumber - 1) * PageSize).Take(PageSize).ToList();
     }
 }

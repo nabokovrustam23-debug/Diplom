@@ -21,7 +21,12 @@ public class IndexModel : PageModel
     public int BookingCount { get; private set; }
     public int BookingsThisWeek { get; private set; }
     public int BookingsToday { get; private set; }
+    public int BookingsTomorrow { get; private set; }
     public decimal RevenueThisWeek { get; private set; }
+    public int CompletedThisWeek { get; private set; }
+    public int CancelledThisWeek { get; private set; }
+    public int NoShowThisWeek { get; private set; }
+    public decimal AvgCheckThisWeek { get; private set; }
 
     public async Task OnGetAsync()
     {
@@ -32,14 +37,22 @@ public class IndexModel : PageModel
         BookingCount = await _db.Bookings.CountAsync();
 
         var today = DateTime.Today;
-        var weekStart = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        // Неделя начинается с понедельника. Если сегодня воскресенье, DayOfWeek == 0.
+        var dow = (int)today.DayOfWeek;
+        var weekStart = today.AddDays(dow == 0 ? -6 : -(dow - 1));
         BookingsToday = await _db.Bookings.CountAsync(b => b.StartDateTime >= today && b.StartDateTime < today.AddDays(1));
+        BookingsTomorrow = await _db.Bookings.CountAsync(b => b.StartDateTime >= today.AddDays(1) && b.StartDateTime < today.AddDays(2));
         BookingsThisWeek = await _db.Bookings.CountAsync(b => b.StartDateTime >= weekStart && b.Status != BookingStatus.Cancelled);
 
-        var weekPrices = await _db.Bookings
-            .Where(b => b.StartDateTime >= weekStart && b.Status == BookingStatus.Completed)
-            .Join(_db.Services, b => b.ServiceId, s => s.ServiceId, (b, s) => s.Price)
+        var weekBookings = await _db.Bookings
+            .Where(b => b.StartDateTime >= weekStart)
+            .Join(_db.Services, b => b.ServiceId, s => s.ServiceId, (b, s) => new { b.Status, s.Price })
             .ToListAsync();
-        RevenueThisWeek = weekPrices.Sum();
+        var completed = weekBookings.Where(x => x.Status == BookingStatus.Completed).ToList();
+        RevenueThisWeek = completed.Sum(x => x.Price);
+        CompletedThisWeek = completed.Count;
+        CancelledThisWeek = weekBookings.Count(x => x.Status == BookingStatus.Cancelled);
+        NoShowThisWeek = weekBookings.Count(x => x.Status == BookingStatus.NoShow);
+        AvgCheckThisWeek = completed.Count > 0 ? Math.Round(RevenueThisWeek / completed.Count, 0) : 0m;
     }
 }

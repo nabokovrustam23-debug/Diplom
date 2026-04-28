@@ -119,6 +119,17 @@
             <div class="filter-actions">
                 <button type="submit" class="btn btn-primary btn-sm">Применить</button>
                 <a class="btn btn-outline btn-sm" asp-page="Index">Сбросить</a>
+                <a class="btn btn-outline btn-sm"
+                   asp-page="Index"
+                   asp-page-handler="Export"
+                   asp-route-StatusFilter="@Model.StatusFilter"
+                   asp-route-DateFilter="@Model.DateFilter"
+                   asp-route-FromDate="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                   asp-route-ToDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
+                   asp-route-BranchId="@Model.BranchId"
+                   asp-route-MasterId="@Model.MasterId"
+                   asp-route-Q="@Model.Q"
+                   title="Экспорт в CSV (Excel-совместимый)">Экспорт CSV</a>
             </div>
         </div>
     </form>
