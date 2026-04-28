@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -42,6 +44,25 @@ public class IndexModel : PageModel
     [TempData] public string? ResetPasswordValue { get; set; }
     [TempData] public string? ResetPasswordEmail { get; set; }
 
+    [BindProperty] public InviteInput Invite { get; set; } = new();
+
+    public class InviteInput
+    {
+        [Required(ErrorMessage = "Укажите фамилию.")]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Укажите имя.")]
+        [StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Укажите e-mail — на него будут идти уведомления и под ним пользователь войдёт.")]
+        [EmailAddress(ErrorMessage = "E-mail указан некорректно.")]
+        public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Укажите телефон.")]
+        [StringLength(32)]
+        public string Phone { get; set; } = string.Empty;
+        [Required] public string Role { get; set; } = IdentitySeeder.AdminRole;
+    }
+
     public record UserRow(
         int UserId,
         string Email,
@@ -50,7 +71,9 @@ public class IndexModel : PageModel
         string RoleLabel,
         string RoleCode);
 
-    public async Task OnGetAsync()
+    public Task OnGetAsync() => LoadUsersAsync();
+
+    private async Task LoadUsersAsync()
     {
         var users = await _db.Users
             .AsNoTracking()
@@ -125,6 +148,76 @@ public class IndexModel : PageModel
         await _userManager.AddToRoleAsync(user, role);
 
         StatusMessage = $"Роль пользователя {user.Email} обновлена на «{RoleLabel(role)}».";
+        return RedirectToPage();
+    }
+
+    /// <summary>Создать новую учётную запись с указанной ролью. Используется
+    /// для приглашения сотрудников без обращения к публичной регистрации.
+    /// Временный пароль генерируется тут же и показывается один раз —
+    /// администратор передаёт его новому пользователю.</summary>
+    public async Task<IActionResult> OnPostInviteAsync()
+    {
+        if (!AllRoles.Contains(Invite.Role))
+        {
+            ModelState.AddModelError(nameof(Invite.Role), "Неизвестная роль.");
+        }
+        if (!ModelState.IsValid)
+        {
+            // Перерисовать страницу со списком и подсветкой ошибок.
+            await LoadUsersAsync();
+            return Page();
+        }
+
+        var phone = Invite.Phone.Trim();
+        var email = Invite.Email.Trim();
+        if (await _userManager.FindByEmailAsync(email) is not null)
+        {
+            ModelState.AddModelError(nameof(Invite.Email), "Пользователь с таким e-mail уже существует.");
+            await LoadUsersAsync();
+            return Page();
+        }
+
+        var persona = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
+        if (persona is null)
+        {
+            persona = new Persona
+            {
+                LastName = Invite.LastName.Trim(),
+                FirstName = Invite.FirstName.Trim(),
+                Phone = phone,
+                Email = email,
+            };
+            _db.Personas.Add(persona);
+            await _db.SaveChangesAsync();
+        }
+        else if (string.IsNullOrWhiteSpace(persona.Email))
+        {
+            persona.Email = email;
+            await _db.SaveChangesAsync();
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            PhoneNumber = phone,
+            PersonaId = persona.PersonaId,
+        };
+        var temp = GenerateTemporaryPassword();
+        var create = await _userManager.CreateAsync(user, temp);
+        if (!create.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Не удалось создать пользователя: " + string.Join("; ", create.Errors.Select(e => e.Description)));
+            await LoadUsersAsync();
+            return Page();
+        }
+        await _userManager.AddToRoleAsync(user, Invite.Role);
+
+        ResetPasswordEmail = email;
+        ResetPasswordValue = temp;
+        StatusMessage = $"Создан пользователь {email} с ролью «{RoleLabel(Invite.Role)}». Временный пароль — выше.";
         return RedirectToPage();
     }
 

@@ -96,7 +96,7 @@ public class CreateModel : PageModel
         await _db.SaveChangesAsync();
 
         TempData["StatusMessage"] = "Мастер создан. Заполните расписание смен, иначе он не появится в публичной записи.";
-        return RedirectToPage("/Staff/Schedule", new { masterId = master.MasterId });
+        return RedirectToPage("/Staff/Schedule", new { MasterId = master.MasterId });
     }
 
     private async Task LoadOptionsAsync()

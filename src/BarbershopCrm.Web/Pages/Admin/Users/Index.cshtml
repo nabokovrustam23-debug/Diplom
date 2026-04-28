@@ -100,9 +100,46 @@
         </tbody>
     </table>
 
-    <p class="text-muted mt-3" style="font-size:0.85rem;">
-        Демо-учётки: <span class="mono">@IdentitySeeder.OwnerEmail</span> / @IdentitySeeder.OwnerPassword,
-        <span class="mono">@IdentitySeeder.AdminEmail</span> / @IdentitySeeder.AdminPassword,
-        мастера — <span class="mono">master{MasterId}@@tihiychas.ru</span> / @IdentitySeeder.MasterPassword.
-    </p>
+    <details class="card mt-5">
+        <summary style="cursor:pointer;font-family:var(--serif);font-size:1.1rem;color:var(--text);">+ Пригласить пользователя</summary>
+        <p class="text-muted mt-2" style="font-size:.88rem;">
+            Создать новую учётную запись с указанной ролью. CRM сгенерирует временный
+            пароль и покажет его один раз — передайте его сотруднику любым защищённым каналом.
+        </p>
+        <form method="post" asp-page-handler="Invite" class="grid grid-cols-2 mt-3" style="gap:12px;">
+            <div asp-validation-summary="ModelOnly" class="notice notice-danger" style="grid-column:1/-1;@(ViewData.ModelState.ErrorCount == 0 ? "display:none" : "")"></div>
+            <div class="field">
+                <label asp-for="Invite.LastName">Фамилия</label>
+                <input asp-for="Invite.LastName" />
+                <span asp-validation-for="Invite.LastName" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Invite.FirstName">Имя</label>
+                <input asp-for="Invite.FirstName" />
+                <span asp-validation-for="Invite.FirstName" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Invite.Email">E-mail</label>
+                <input asp-for="Invite.Email" type="email" />
+                <span asp-validation-for="Invite.Email" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Invite.Phone">Телефон</label>
+                <input asp-for="Invite.Phone" type="tel" placeholder="+7 (999) 000-00-00" />
+                <span asp-validation-for="Invite.Phone" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Invite.Role">Роль</label>
+                <select asp-for="Invite.Role">
+                    @foreach (var r in BarbershopCrm.Web.Pages.Admin.Users.IndexModel.AllRoles)
+                    {
+                        <option value="@r">@BarbershopCrm.Web.Pages.Admin.Users.IndexModel.RoleLabel(r)</option>
+                    }
+                </select>
+            </div>
+            <div class="field" style="align-self:end;">
+                <button type="submit" class="btn btn-primary">Создать</button>
+            </div>
+        </form>
+    </details>
 </div>

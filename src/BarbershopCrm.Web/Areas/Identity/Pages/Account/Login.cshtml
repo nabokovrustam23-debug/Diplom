@@ -1,4 +1,5 @@
 @page
+@using BarbershopCrm.Infrastructure.Identity
 @model LoginModel
 
 @{
@@ -39,6 +40,15 @@
                 <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Зарегистрироваться</a>
             </div>
         </form>
+
+        <details class="identity-demo mt-4">
+            <summary>Демо-учётные записи (для проверяющего)</summary>
+            <div class="text-muted" style="font-size:.88rem;line-height:1.7;margin-top:8px;">
+                <div><strong>Владелец</strong> · <span class="mono">@IdentitySeeder.OwnerEmail</span> / <span class="mono">@IdentitySeeder.OwnerPassword</span></div>
+                <div><strong>Администратор</strong> · <span class="mono">@IdentitySeeder.AdminEmail</span> / <span class="mono">@IdentitySeeder.AdminPassword</span></div>
+                <div><strong>Мастер</strong> · <span class="mono">master1@tihiychas.ru</span> / <span class="mono">@IdentitySeeder.MasterPassword</span> (master1…master5)</div>
+            </div>
+        </details>
     </div>
 </section>
 

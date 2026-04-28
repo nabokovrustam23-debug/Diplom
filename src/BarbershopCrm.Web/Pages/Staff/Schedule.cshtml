@@ -47,6 +47,12 @@
             <p class="mb-0">@TempData["ScheduleMessage"]</p>
         </div>
     }
+    @if (!string.IsNullOrEmpty(TempData["StatusMessage"] as string))
+    {
+        <div class="notice notice-warn mb-3">
+            <p class="mb-0">@TempData["StatusMessage"]</p>
+        </div>
+    }
 
     @if (Model.CurrentMaster is not null)
     {
