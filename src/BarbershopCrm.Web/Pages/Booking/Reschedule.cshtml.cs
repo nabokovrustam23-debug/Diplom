@@ -3,11 +3,13 @@ using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
 using BarbershopCrm.Infrastructure.Services;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BarbershopCrm.Web.Pages.Booking;
 
@@ -24,12 +26,18 @@ public class RescheduleModel : PageModel
     private readonly ApplicationDbContext _db;
     private readonly ISlotService _slots;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly BookingPolicyOptions _policy;
 
-    public RescheduleModel(ApplicationDbContext db, ISlotService slots, UserManager<ApplicationUser> userManager)
+    public RescheduleModel(
+        ApplicationDbContext db,
+        ISlotService slots,
+        UserManager<ApplicationUser> userManager,
+        IOptions<BookingPolicyOptions> policy)
     {
         _db = db;
         _slots = slots;
         _userManager = userManager;
+        _policy = policy.Value;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -72,6 +80,20 @@ public class RescheduleModel : PageModel
     public async Task<IActionResult> OnPostAsync(DateOnly newDate, TimeOnly newTime)
     {
         if (!await LoadAsync()) return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
+
+        // Политика переноса (только для клиента; сотрудники могут переносить позже).
+        if (!User.IsInRole(IdentitySeeder.OwnerRole)
+            && !User.IsInRole(IdentitySeeder.AdminRole)
+            && !User.IsInRole(IdentitySeeder.MasterRole))
+        {
+            var hoursLeft = (Current!.StartDateTime - DateTime.UtcNow).TotalHours;
+            if (hoursLeft < _policy.MinHoursBeforeCancel)
+            {
+                StatusMessage = $"Перенести запись можно не позже чем за {_policy.MinHoursBeforeCancel} ч до начала. " +
+                                "Свяжитесь с администратором филиала.";
+                return RedirectToPage("/Account/Manage/Index", new { area = "Identity" });
+            }
+        }
 
         // Проверяем доступность выбранного слота.
         var available = await _slots.GetAvailableSlotsAsync(

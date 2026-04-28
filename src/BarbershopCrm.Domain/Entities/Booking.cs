@@ -16,6 +16,9 @@ public class Booking
     public DateTime? RescheduledFromUtc { get; set; }
     public string? Notes { get; set; }
     public string? Wishes { get; set; }
+    /// <summary>Идентификатор идемпотентности: повторный POST с тем же ключом
+    /// не создаёт дубликат, а возвращает уже созданную запись.</summary>
+    public Guid? IdempotencyKey { get; set; }
 
     public Client Client { get; set; } = null!;
     public Master Master { get; set; } = null!;

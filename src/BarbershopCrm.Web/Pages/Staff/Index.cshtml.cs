@@ -2,6 +2,7 @@ using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -66,7 +67,10 @@ public class IndexModel : PageModel
         // поставить «не пришёл». Полную отмену оставляем администратору.
         if (status is BookingStatus.Confirmed or BookingStatus.Completed or BookingStatus.NoShow)
         {
+            var oldStatus = booking.Status;
             booking.Status = status;
+            AuditLogger.Log(_db, User, "MasterChangeStatus", "Booking", booking.BookingId.ToString(),
+                $"from={oldStatus} to={status}");
             await _db.SaveChangesAsync();
         }
 

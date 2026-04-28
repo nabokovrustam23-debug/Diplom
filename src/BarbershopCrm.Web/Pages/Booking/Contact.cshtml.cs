@@ -4,6 +4,7 @@ using BarbershopCrm.Domain.Enums;
 using BarbershopCrm.Infrastructure.Data;
 using BarbershopCrm.Infrastructure.Identity;
 using BarbershopCrm.Infrastructure.Services;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -55,6 +56,14 @@ public class ContactModel : PageModel
     [BindProperty]
     public ContactInput Input { get; set; } = new();
 
+    /// <summary>
+    /// Ключ идемпотентности: генерируется на GET и передаётся в скрытом поле.
+    /// При повторном POST (двойной клик/refresh) одна и та же запись не создаётся
+    /// дважды — благодаря уникальному индексу IdempotencyKey в БД.
+    /// </summary>
+    [BindProperty]
+    public string IdempotencyKey { get; set; } = string.Empty;
+
     public Branch? Branch { get; private set; }
     public Domain.Entities.Service? Service { get; private set; }
     public Domain.Entities.Master? Master { get; private set; }
@@ -98,6 +107,9 @@ public class ContactModel : PageModel
             return RedirectToPage("Index");
         }
 
+        // Свежий ключ идемпотентности для этой формы записи.
+        IdempotencyKey = Guid.NewGuid().ToString("N");
+
         // Если пользователь залогинен — подставим его контактные данные из Persona.
         if (User.Identity?.IsAuthenticated == true)
         {
@@ -131,6 +143,22 @@ public class ContactModel : PageModel
             return Page();
         }
 
+        // Идемпотентность: если пришёл повторный POST с тем же ключом —
+        // не создаём дубликат, а просто возвращаем уже созданную запись.
+        if (Guid.TryParse(IdempotencyKey, out var idemGuid))
+        {
+            var existing = await _db.Bookings.AsNoTracking()
+                .FirstOrDefaultAsync(b => b.IdempotencyKey == idemGuid);
+            if (existing is not null)
+            {
+                return RedirectToPage("Success", new { bookingId = existing.BookingId });
+            }
+        }
+        else
+        {
+            idemGuid = Guid.NewGuid();
+        }
+
         // Повторная проверка слота — на случай гонки.
         var date = DateOnly.FromDateTime(Start);
         var time = TimeOnly.FromDateTime(Start);
@@ -138,20 +166,22 @@ public class ContactModel : PageModel
 
         if (!available.Contains(time))
         {
-            // Для дружелюбной ошибки подтягиваем ближайшее свободное окно.
-            SuggestedSlot = await _slots.GetNextAvailableSlotAsync(MasterId, BranchId, ServiceId, horizonDays: SlotModel.HorizonDays);
-            var suggestion = SuggestedSlot is null
-                ? "К сожалению, свободных слотов на ближайшие две недели не осталось."
-                : $"Ближайшее свободное окно — {SuggestedSlot.Value.Date:dd.MM} в {SuggestedSlot.Value.Time:HH\\:mm}.";
-            ModelState.AddModelError(string.Empty,
-                $"Ой, этот слот уже заняли. {suggestion} Вернитесь на шаг «Время» и выберите другое.");
+            await ShowSlotTakenAsync();
             return Page();
         }
 
-        // Поиск/создание Persona по нормализованному телефону.
-        // Если по этому телефону уже есть пользователь сети — используем его Persona,
-        // чтобы запись попала в личный кабинет.
-        var phone = NormalizePhone(Input.Phone);
+        // Нормализация телефона через единый утилитный метод.
+        // Это гарантирует, что номер вида «8 999 …» и «+7 999 …» сводятся
+        // к одной канонической записи и работает поиск Persona по уникальному индексу.
+        var phone = PhoneUtil.Normalize(Input.Phone);
+
+        // Транзакция нужна, чтобы создание Persona/Client/Booking
+        // и проверка занятости слота прошли как единое целое.
+        // Уникальный частичный индекс UX_Bookings_MasterStart_Active
+        // на уровне БД отказывает в SaveChanges, если параллельный POST
+        // успел создать запись на тот же слот первым.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
         var persona = await _db.Personas.FirstOrDefaultAsync(p => p.Phone == phone);
         if (persona is null)
         {
@@ -166,7 +196,6 @@ public class ContactModel : PageModel
             await _db.SaveChangesAsync();
         }
 
-        // Поиск/создание Client.
         var client = await _db.Clients.FirstOrDefaultAsync(c => c.PersonaId == persona.PersonaId);
         if (client is null)
         {
@@ -194,17 +223,44 @@ public class ContactModel : PageModel
             MasterId = MasterId,
             ServiceId = ServiceId,
             BranchId = BranchId,
-            StartDateTime = Start,
+            // Время в БД храним как UTC: явно фиксируем Kind, чтобы EF
+            // не «угадывал» при сравнении с DateTime.UtcNow.
+            StartDateTime = DateTime.SpecifyKind(Start, DateTimeKind.Utc),
             DurationMinutes = Service!.DurationMinutes,
             Status = BookingStatus.Created,
             CreatedAt = DateTime.UtcNow,
             Notes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-            Wishes = wishes
+            Wishes = wishes,
+            IdempotencyKey = idemGuid
         };
         _db.Bookings.Add(booking);
-        await _db.SaveChangesAsync();
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Конфликт уникального индекса — слот уже занят либо повторный POST
+            // выиграл гонку. Откатываем и показываем дружелюбную ошибку.
+            await tx.RollbackAsync();
+            await ShowSlotTakenAsync();
+            return Page();
+        }
+
+        await tx.CommitAsync();
 
         return RedirectToPage("Success", new { bookingId = booking.BookingId });
+    }
+
+    private async Task ShowSlotTakenAsync()
+    {
+        SuggestedSlot = await _slots.GetNextAvailableSlotAsync(MasterId, BranchId, ServiceId, horizonDays: SlotModel.HorizonDays);
+        var suggestion = SuggestedSlot is null
+            ? "К сожалению, свободных слотов на ближайшие две недели не осталось."
+            : $"Ближайшее свободное окно — {SuggestedSlot.Value.Date:dd.MM} в {SuggestedSlot.Value.Time:HH\\:mm}.";
+        ModelState.AddModelError(string.Empty,
+            $"Ой, этот слот уже заняли. {suggestion} Вернитесь на шаг «Время» и выберите другое.");
     }
 
     private async Task<bool> LoadContextAsync()
@@ -218,15 +274,5 @@ public class ContactModel : PageModel
             .FirstOrDefaultAsync(m => m.MasterId == MasterId);
 
         return Branch is not null && Service is not null && Master is not null && Start != default;
-    }
-
-    private static string NormalizePhone(string raw)
-    {
-        var digits = new string(raw.Where(char.IsDigit).ToArray());
-        if (digits.StartsWith("8") && digits.Length == 11)
-        {
-            digits = "7" + digits[1..];
-        }
-        return "+" + digits;
     }
 }

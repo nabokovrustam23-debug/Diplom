@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BarbershopCrm.Domain.Entities;
 using BarbershopCrm.Infrastructure.Data;
+using BarbershopCrm.Web.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -42,14 +43,18 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        _db.Branches.Add(new Branch
+        var branch = new Branch
         {
             Name = Input.Name.Trim(),
             Address = Input.Address.Trim(),
             Phone = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim(),
             OpeningTime = Input.OpeningTime,
             ClosingTime = Input.ClosingTime
-        });
+        };
+        _db.Branches.Add(branch);
+        await _db.SaveChangesAsync();
+        AuditLogger.Log(_db, User, "Create", "Branch", branch.BranchId.ToString(),
+            $"name={branch.Name}");
         await _db.SaveChangesAsync();
         return RedirectToPage("Index");
     }
